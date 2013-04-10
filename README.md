@@ -1,17 +1,30 @@
 gitphull
 ========
 
-A quick way to pull all branches of project. Great for setting up a stage server with a subdomain for each branch.
+A quick PHP class to pull all branches of project. It works great for setting up a stage server with each branch on its own site.
 
 Getting Started
 --------
 
     $phull = new Gitphull();
-    $phull->setRepo('git://github.com/deseretdigital/gitphull.git')
+    $phull->setRepo('git@github.com:deseretdigital/gitphull.git')
       ->setMasterBranch('master')
       ->setLocation('/var/www/')
       ->setPrefix('gitphull_');
     $phull->run();`
+
+Assuming you have a master, bugs and foo branch, the following directories will be created:
+
+    /var/www/gitphull_master
+    /var/www/gitphull_bugs
+    /var/www/gitphull_foo
+
+You can setup apache so the following subdomains serve up the corrosponding branch of code:
+
+    http://master.example.com
+    http:/bugs.example.com
+    http:/foo.example.com
+
 
 Apache Vhost Setup
 --------
@@ -49,4 +62,5 @@ These methods will be called, allowing you to create symlinks or do other chores
     afterBranchClone()
     afterBranchUpdate()
     afterBranchDelete()
+
 
