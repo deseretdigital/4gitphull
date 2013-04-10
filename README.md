@@ -7,7 +7,7 @@ Getting Started
 --------
 
     $phull = new Gitphull();
-    $phull->setRepo('git@github.com:deseretdigital/gitphull.git')
+    $phull->setRepo('git://github.com/deseretdigital/gitphull.git')
       ->setMasterBranch('master')
       ->setLocation('/var/www/')
       ->setPrefix('gitphull_');
