@@ -29,6 +29,8 @@ You can setup apache so the following subdomains serve up the corrosponding bran
 Apache Vhost Setup
 --------
 
+Since this vhost matches anything, it should be the last to load so it doesn't grab traffic for www.example.com
+
     <VirtualHost *:80>
         ServerName branches.example.com
         ServerAlias *.example.com	
