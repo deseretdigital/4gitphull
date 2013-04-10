@@ -22,8 +22,8 @@ Assuming you have a master, bugs and foo branch, the following directories will 
 You can setup apache so the following subdomains serve up the corrosponding branch of code:
 
     http://master.example.com
-    http:/bugs.example.com
-    http:/foo.example.com
+    http://bugs.example.com
+    http://foo.example.com
 
 
 Apache Vhost Setup
