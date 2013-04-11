@@ -28,9 +28,9 @@ class GitphullTest extends PHPUnit_Framework_TestCase
         `git add -A && git commit -m 'added master'`;
 
         foreach (self::$branches as $branch) {
-            exec('git checkout -b ' . $branch . ' master');
-            exec('touch ' . $branch);
-            exec('git add -A && git commit -m \'added ' . $branch . '\'');
+            exec('git checkout -b ' . escapeshellarg($branch) . ' master');
+            exec('touch ' . escapeshellarg($branch));
+            exec('git add -A && git commit -m \'added ' . escapeshellarg($branch) . '\'');
         }
 
         chdir($currentDir);
@@ -38,8 +38,8 @@ class GitphullTest extends PHPUnit_Framework_TestCase
 
     public static function tearDownAfterClass()
     {
-        exec('rm -rf ' . self::$repoDir);
-        exec('rm -rf ' . self::$webDir);
+        exec('rm -rf ' . escapeshellarg(self::$repoDir));
+        exec('rm -rf ' . escapeshellarg(self::$webDir));
     }
 
     protected function setUp()
