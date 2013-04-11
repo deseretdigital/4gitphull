@@ -118,6 +118,9 @@ class Gitphull {
      * @return gitphull
      */
     public function setLocation($dir) {
+        if (substr($dir, -1) !== '/') {
+            $dir .= '/';
+        }
     	$this->location = $dir;
     	return $this;
     }
@@ -264,11 +267,11 @@ class Gitphull {
     }
 
     /**
-     * Git clone a repo into a location. Add a file to track that it was cloned by this code
+     * Git clone a branch from a repo into a location. Add a file to track that it was cloned by this code
      * @param string $branch
      */
     protected function klone($branch) {
-    	$cmd = "git clone {$this->repo} {$this->location}{$this->prefix}{$branch}";
+    	$cmd = "git clone --branch=$branch {$this->repo} {$this->location}{$this->prefix}{$branch}";
     	$this->msg($cmd);
     	$this->runCommand($cmd);
     	$cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
