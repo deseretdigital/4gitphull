@@ -77,6 +77,8 @@ class Gitphull {
      */
     protected $masterDir;
 
+    protected $invalidBranchCharacters = array('-','_','/');
+
     /**
      * Checkout or update all branches that aren't ignored.
      */
@@ -109,6 +111,12 @@ class Gitphull {
      */
     public function setRepo($repo) {
         $this->repo = $repo;
+        return $this;
+    }
+
+    public function setInvalidBranchCharacters($array)
+    {
+        $this->invalidBranchCharacters = $array;
         return $this;
     }
 
@@ -309,10 +317,10 @@ class Gitphull {
     		return;
     	}
     	foreach($notManaged as &$m) {
-    		$m = str_replace(array('-','_','/'), '', $m);
+    		$m = str_replace($this->invalidBranchCharacters, '', $m);
     	}
     	foreach($remotes as &$r) {
-    		$r = str_replace(array('-','_','/'), '', $r);
+    		$r = str_replace($this->invalidBranchCharacters, '', $r);
     	}
 
     	foreach($checkedOut as $co) {
@@ -346,7 +354,7 @@ class Gitphull {
 
     	if($branch != $this->masterBranch) {
     	    // path for branches other than master
-    		$branchpath = str_replace(array('-','_','/'), '', $branch);
+    		$branchpath = str_replace($this->invalidBranchCharacters, '', $branch);
     		$dir = str_replace($this->masterBranch, $branchpath, $this->masterDir);
     	} else {
     	    // "master" branch (fetch names of other branches)
