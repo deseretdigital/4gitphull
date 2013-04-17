@@ -298,9 +298,16 @@ class Gitphull {
     	$rs = shell_exec($cmd);
     	$lines = preg_split("/\n/", trim($rs));
     	unset($lines[0]);
-    	foreach($lines as &$l) {
+    	foreach($lines as $k => &$l) {
     		$l = trim(str_replace('origin/', '', $l));
+            // Some repos have an entry called "HEAD -> master", we want to ignore this
+            // remote. Check for any remotes that have a space in them.
+            if(strpos($l, ' ') !== false)
+            {
+                unset($lines[$k]);
+            }
     	}
+
     	return $lines;
     }
 
