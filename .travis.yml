@@ -7,4 +7,6 @@ php:
 before_script:
   - wget http://getcomposer.org/composer.phar
   - php composer.phar install
+  - git config --global user.email "you@example.com"
+  - git config --global user.name "Your Name"
   - phpunit
