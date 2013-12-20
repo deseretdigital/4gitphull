@@ -11,7 +11,7 @@ Getting Started
       ->setMasterBranch('master')
       ->setLocation('/var/www/')
       ->setPrefix('gitphull_');
-    $phull->run();`
+    $phull->run();
 
 Assuming you have a master, bugs and foo branch, the following directories will be created:
 
