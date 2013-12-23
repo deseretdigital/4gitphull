@@ -70,8 +70,8 @@ Pivotal Tracker - If an API token is provided, this will attempt to parse out [#
 Set Domain - Diffs File will create links to each branch. The domain will be used to create links to branchName.domain
 
     ->setDomain('example.com')
- 
 
+ 
 Methods that run after events
 --------
 
