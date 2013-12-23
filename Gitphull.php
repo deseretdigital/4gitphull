@@ -108,6 +108,12 @@ class Gitphull {
     protected $domain;
 
     /**
+     * Array of info about the branch that is currently being acted on
+     * @var array
+     */
+    protected $current = array();
+
+    /**
      * Checkout or update all branches that aren't ignored.
      */
     public function run() {
@@ -130,18 +136,24 @@ class Gitphull {
     			}
     		}
 
+    		// also sets branch, branchPath, gitPath in $this->current
     		$this->updateOrClone($this->masterBranch);
 
     		$remotes = $this->getBranches($this->masterDir);
     		$this->msg("Known remotes:");
 
     		$this->msg(print_r($remotes, true));
+    		// also sets branch, branchPath, gitPath in $this->current
     		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
 
     		/* Clone or update other remote branches */
     		$this->checkoutBranches($remotes);
 
+    		// diff $master with all other known branches, generate an html file of commits that aren't merged
     		$this->generateBranchDiffs();
+
+    		// we aren't currently operating on a branch, so nuke this data
+    		$this->current = array();
 
     		$this->afterRun();
 
@@ -281,6 +293,14 @@ class Gitphull {
     }
 
     /**
+     * Do stuff - before a branch is updated
+     * @param string $branch
+     */
+    protected function beforeBranchUpdate($branch) {
+    	// any additional tasks after $branch is updated
+    }
+
+    /**
      * Do stuff - after a branch is updated
      * @param string $branch
      */
@@ -356,12 +376,11 @@ class Gitphull {
      */
     protected function update($branch) {
 
-    	$branchPath = $gitPath = str_replace($this->invalidBranchCharacters, '', $branch);
-
-        $gitPath = $this->location . $this->prefix . $branchPath;
-
+        $gitPath = $this->current['gitPath'];
+        $this->beforeBranchUpdate($branch);
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
+    	$this->msg("Hard reset on $gitPath");
     	$this->runCommand($cmd);
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout $branch";
@@ -380,7 +399,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function klone($branch) {
-    	$dir = str_replace($this->invalidBranchCharacters, '', $branch);
+    	$dir = $this->current['getPath'];
     	$cmd = "git clone --branch=$branch {$this->repo} {$this->location}{$this->prefix}{$dir}";
     	$this->msg($cmd);
     	$this->runCommand($cmd);
@@ -438,7 +457,15 @@ class Gitphull {
     		if(in_array($co, $remotes)) {
     			continue;
     		}
-    		$dir = str_replace($this->masterBranch, $co, $this->masterDir);
+
+    		$branchPath = str_replace($this->invalidBranchCharacters, '', $co);
+
+    		$this->current = array();
+    		$this->current['branch'] = $co;
+    		$this->current['branchPath'] = $branchPath;
+    		$dir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+    		$this->current['gitPath'] = $dir;
+
     		$this->msg("check $dir/managedbranch.txt");
     		if(file_exists($dir . "/managedbranch.txt")) {
     			$this->msg("Delete $co");
@@ -458,12 +485,14 @@ class Gitphull {
     protected function updateOrClone($branch) {
     	$repo = $this->repo;
     	$dir = $this->masterDir;
-    	$branchpath = $dir;
+    	$this->current['branch'] = $branch;
+    	$this->current['branchPath'] = str_replace($this->invalidBranchCharacters, '', $branch);
+    	$this->current['gitPath'] = $dir;
 
     	if($branch != $this->masterBranch) {
     	    // path for branches other than master
-    		$branchpath = str_replace($this->invalidBranchCharacters, '', $branch);
-    		$dir = str_replace($this->masterBranch, $branchpath, $this->masterDir);
+    		$dir = str_replace($this->masterBranch, $this->current['branchPath'], $this->masterDir);
+    		$this->current['gitPath'] = $dir;
 
     	} else {
     	    // "master" branch (fetch names of other branches)
@@ -490,12 +519,13 @@ class Gitphull {
     	if(!file_exists($dir.'/.git')) {
     		$this->msg("CLONE $branch");
     		$this->klone($branch);
-    		$this->applyPermissions($dir);
+    		$this->applyPermissions();
     		$this->afterBranchClone($branch);
     	} else {
     		$this->msg("update $branch");
+    		$this->beforeBranchUpdate($branch);
     		$this->update($branch);
-    		$this->applyPermissions($dir);
+    		$this->applyPermissions();
     		$this->afterBranchUpdate($branch);
     	}
 
@@ -503,13 +533,14 @@ class Gitphull {
 
     /**
      * If user/group/perms info was provided, make it so
-     * @param string $dir
      * @return boolean
      */
-    protected function applyPermissions($dir) {
+    protected function applyPermissions() {
+
+    	$dir = $this->current['gitPath'];
 
     	if(empty($this->ownerInfo)) {
-    		return true;
+    		return false;
     	}
 
     	if(!empty($this->ownerInfo['user'])) {

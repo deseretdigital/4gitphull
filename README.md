@@ -53,28 +53,35 @@ Optional Settings
 
 Ignore some branches
 
-->setIgnoreBranches(array('old','deleteme'))
+    ->setIgnoreBranches(array('old','deleteme'))
 
 Set user/group/permissions
 
-->setPermissions('www-data', 'www-data', '774')
+    ->setPermissions('www-data', 'www-data', '774')
 
 What change? Show commits that are not merged into master. Path is relative to the location of the master
 
-->setBranchDiffsFileLocation('/diff.html')
+    ->setBranchDiffsFileLocation('/diff.html')
 
 Pivotal Tracker - If an API token is provided, this will attempt to parse out [#123] as story id 123 and add info from the tracker to the diff page.
 
-->setPivotalTracker('your_tracker_api_token')
+    ->setPivotalTracker('your_tracker_api_token')
+
+Set Domain - Diffs File will create links to each branch. The domain will be used to create links to branchName.domain
+
+    ->setDomain('example.com')
+ 
 
 Methods that run after events
 --------
 
-These methods will be called, allowing you to create symlinks or do other chores that must be done after a branch is updated, deleted, etc.
+These methods will be called, allowing you to create symlinks, do a git clean or do other chores that must be done after a branch is updated, deleted, etc. $this->current is an array that contains 'branch' (the current branch), 'branchPath' (name of the branch as it will be on the filesystem) and 'gitPath', the full path to the .git file. $this->current should provide enough information to handle various tasks.
 
     afterRun()
     afterBranchClone()
     afterBranchUpdate()
     afterBranchDelete()
+    beforeBranchUpdate()
+
 
 
