@@ -1,4 +1,4 @@
-gitphull
+4gitphull
 ========
 
 A quick PHP class to pull all branches of project. It works great for setting up a stage server with each branch on its own site.
@@ -67,7 +67,7 @@ What change? Show commits that are not merged into master. Path is relative to t
 
     ->setBranchDiffsFileLocation('/diff.html')
 
-Pivotal Tracker - If an API token is provided, this will attempt to parse out [#123] as story id 123 and add info from the tracker to the diff page.
+Pivotal Tracker - If an API token is provided, this will attempt to parse out [#123] as story id 123 and add info from the tracker to the diff page. (BETA)
 
     ->setPivotalTracker('your_tracker_api_token')
 
@@ -75,6 +75,10 @@ Set Domain - Diffs File will create links to each branch. The domain will be use
 
     ->setDomain('example.com')
 
+Provide a url to a page that gives the hash of the current release. Provide a path to a file to write a commit log with a marker indicating whcih commits are in the local master, but not the released master.
+
+    ->setUrlCurrentHash('http://example.com/hash_of_current_release.php')
+    ->setLiveDiffFileLocation('/live.html') // relative to local master
  
 Methods that run after events
 --------
