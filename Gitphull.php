@@ -172,7 +172,7 @@ class Gitphull {
 
     		// show commits that are not live
     		if($this->liveDiffFileLocation) {
-    			$this->wrteLiveDiff();
+    			$this->writeLiveDiff();
     		}
 
     		// we aren't currently operating on a branch, so nuke this data
@@ -875,7 +875,7 @@ class Gitphull {
 	} // end live()
 
 
-	public function wrteLiveDiff() {
+	public function writeLiveDiff() {
 
 		if(empty($this->liveLog)) {
 			$this->liveDiff();
@@ -891,7 +891,8 @@ class Gitphull {
 		$contents = ob_get_contents();
 		ob_end_clean();
 
-		$location = $this->masterDir . '/live.html';
+		$location = $this->masterDir . $this->liveDiffFileLocation;
+		$this->msg('Write live log to ' . $location . '. Content length = ' . strlen($contents));
 		file_put_contents($location, $contents);
 
 		exit;
