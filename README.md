@@ -53,19 +53,23 @@ Optional Settings
 
 Ignore some branches
 
-->setIgnoreBranches(array('old','deleteme'))
+    ->setIgnoreBranches(array('old','deleteme'))
 
 Set user/group/permissions
 
-->setPermissions('www-data', 'www-data', '774')
+    ->setPermissions('www-data', 'www-data', '774')
 
 What change? Show commits that are not merged into master. Path is relative to the location of the master
 
-->setBranchDiffsFileLocation('/diff.html')
+    ->setBranchDiffsFileLocation('/diff.html')
 
 Pivotal Tracker - If an API token is provided, this will attempt to parse out [#123] as story id 123 and add info from the tracker to the diff page.
 
-->setPivotalTracker('your_tracker_api_token')
+    ->setPivotalTracker('your_tracker_api_token')
+
+Set Domain - Diffs File will create links to each branch. The domain will be used to create  links to branchName.domain
+
+    ->setDomain('example.com')
 
 Methods that run after events
 --------
