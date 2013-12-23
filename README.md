@@ -55,6 +55,10 @@ Ignore some branches
 
     ->setIgnoreBranches(array('old','deleteme'))
 
+Set a list of characters that are invalid (or you don't want used) in the path where the branch will live
+
+    ->setInvalidBranchCharacters(array('-','_','/'))
+
 Set user/group/permissions
 
     ->setPermissions('www-data', 'www-data', '774')
@@ -75,7 +79,7 @@ Set Domain - Diffs File will create links to each branch. The domain will be use
 Methods that run after events
 --------
 
-These methods will be called, allowing you to create symlinks, do a git clean or do other chores that must be done after a branch is updated, deleted, etc. $this->current is an array that contains 'branch' (the current branch), 'branchPath' (name of the branch as it will be on the filesystem) and 'gitPath', the full path to the .git file. $this->current should provide enough information to handle various tasks.
+These methods will be called, allowing you to create symlinks, do a git clean or do other chores that must be done after a branch is updated, deleted, etc.
 
     afterRun()
     afterBranchClone()
@@ -83,5 +87,8 @@ These methods will be called, allowing you to create symlinks, do a git clean or
     afterBranchDelete()
     beforeBranchUpdate()
 
+The array, $this->current, should provide enough information to handle various tasks.
 
-
+    'branch' - the current branch
+    'branchPath' - name of the branch as it will be on the filesystem
+    'gitPath' - the full path to the .git file
