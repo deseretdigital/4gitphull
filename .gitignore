@@ -1,2 +1,6 @@
 bin
 vendor
+repo
+.settings
+.project
+.buildpath

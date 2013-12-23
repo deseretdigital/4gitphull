@@ -77,6 +77,16 @@ class Gitphull {
      */
     protected $masterDir;
 
+    /**
+     * user, group and permissions for everything this checks out
+     * @var array
+     */
+    protected $ownerInfo = array();
+
+    /**
+     * Chars that are not valid for paths
+     * @var array
+     */
     protected $invalidBranchCharacters = array('-','_','/');
 
     /**
@@ -84,24 +94,41 @@ class Gitphull {
      */
     public function run() {
 
-        $this->currentBranches = $this->getCheckedOutBranches();
+    	try {
 
-        /* Checkout "master" */
-        $this->ignoreBranches[] = $this->masterBranch; // ignore it, it is special
-        $this->masterDir = $this->location . $this->prefix . $this->masterBranch;
-        $this->updateOrClone($this->masterBranch);
+    		$this->currentBranches = $this->getCheckedOutBranches();
 
-        $remotes = $this->getBranches($this->masterDir);
-        $this->msg("Known remotes:");
+    		/* Checkout "master" */
+    		$this->ignoreBranches[] = $this->masterBranch; // ignore it, it is special
+    		$this->masterDir = $this->location . $this->prefix . $this->masterBranch;
 
-        $this->msg(print_r($remotes, true));
-        $this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
+    		if(!file_exists($this->masterDir)) {
+    			@$result = mkdir($this->masterDir);
+    			if($result == '1') {
+    				$this->msg('created ' . $this->masterDir);
+    			} else {
+    				//$this->msg('could not create ' . $this->masterDir);
+    				throw new Exception('could not create dir: ' . $this->masterDir);
+    			}
+    		}
 
-        /* Clone or update other remote branches */
-        $this->checkoutBranches($remotes);
+    		$this->updateOrClone($this->masterBranch);
 
-        $this->afterRun();
+    		$remotes = $this->getBranches($this->masterDir);
+    		$this->msg("Known remotes:");
 
+    		$this->msg(print_r($remotes, true));
+    		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
+
+    		/* Clone or update other remote branches */
+    		$this->checkoutBranches($remotes);
+
+    		$this->afterRun();
+
+    	} catch (Exception $e) {
+    		$this->msg("Exception caught in run():\n" . $e->getMessage() . "\n\n");
+    		exit;
+    	}
     }
 
     /**
@@ -114,10 +141,29 @@ class Gitphull {
         return $this;
     }
 
+    /**
+     * Set chars that are not valid (or you don't want to use) in filesystem paths
+     * @param array $array
+     * @return Gitphull
+     */
     public function setInvalidBranchCharacters($array)
     {
         $this->invalidBranchCharacters = $array;
         return $this;
+    }
+
+    /**
+     * Set user/group/perms for checked out branches
+     * @param string $user
+     * @param string $group
+     * @param string $mask
+     * @return Gitphull
+     */
+    public function setPermissions($user, $group, $mask) {
+    	$this->ownerInfo['user'] = $user;
+    	$this->ownerInfo['group'] = $group;
+    	$this->ownerInfo['mask'] = $mask;
+    	return $this;
     }
 
     /**
@@ -258,7 +304,10 @@ class Gitphull {
      */
     protected function update($branch) {
 
-        $gitPath = $this->location . $this->prefix . $branch;
+    	$branchPath = $gitPath = str_replace($this->invalidBranchCharacters, '', $branch);
+
+        $gitPath = $this->location . $this->prefix . $branchPath;
+
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
     	$this->runCommand($cmd);
@@ -279,7 +328,8 @@ class Gitphull {
      * @param string $branch
      */
     protected function klone($branch) {
-    	$cmd = "git clone --branch=$branch {$this->repo} {$this->location}{$this->prefix}{$branch}";
+    	$dir = str_replace($this->invalidBranchCharacters, '', $branch);
+    	$cmd = "git clone --branch=$branch {$this->repo} {$this->location}{$this->prefix}{$dir}";
     	$this->msg($cmd);
     	$this->runCommand($cmd);
     	$cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
@@ -297,7 +347,6 @@ class Gitphull {
     	$this->msg($cmd);
     	$rs = shell_exec($cmd);
     	$lines = preg_split("/\n/", trim($rs));
-    	unset($lines[0]);
     	foreach($lines as $k => &$l) {
     		$l = trim(str_replace('origin/', '', $l));
             // Some repos have an entry called "HEAD -> master", we want to ignore this
@@ -363,6 +412,7 @@ class Gitphull {
     	    // path for branches other than master
     		$branchpath = str_replace($this->invalidBranchCharacters, '', $branch);
     		$dir = str_replace($this->masterBranch, $branchpath, $this->masterDir);
+
     	} else {
     	    // "master" branch (fetch names of other branches)
     		$cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" remote prune origin";
@@ -374,17 +424,58 @@ class Gitphull {
     		$this->msg("purned and fetched " . $this->masterBranch);
     	}
 
-    	@mkdir($dir);
+		if(!file_exists($dir)) {
+	    	@$result = mkdir($dir);
+	    	if($result == '1') {
+	    		$this->msg('created ' . $dir);
+	    	} else {
+	    		$this->msg('could not create!! ' . $dir);
+	    		throw new Exception('could not create branch dir ' . $dir);
+	    	}
+		}
 
     	// Either clone or update a branch
     	if(!file_exists($dir.'/.git')) {
+    		$this->msg("CLONE $branch");
     		$this->klone($branch);
+    		$this->applyPermissions($dir);
     		$this->afterBranchClone($branch);
     	} else {
     		$this->msg("update $branch");
     		$this->update($branch);
+    		$this->applyPermissions($dir);
     		$this->afterBranchUpdate($branch);
     	}
+
+    }
+
+    /**
+     * If user/group/perms info was provided, make it so
+     * @param string $dir
+     * @return boolean
+     */
+    protected function applyPermissions($dir) {
+
+    	if(empty($this->ownerInfo)) {
+    		return true;
+    	}
+
+    	if(!empty($this->ownerInfo['user'])) {
+    		$cmd = 'chown -R ' . $this->ownerInfo['user'] . " $dir";
+    		shell_exec($cmd);
+    	}
+
+    	if(!empty($this->ownerInfo['group'])) {
+    		$cmd = 'chgrp -R ' . $this->ownerInfo['group'] . " $dir";
+    		shell_exec($cmd);
+    	}
+
+    	if(!empty($this->ownerInfo['mask'])) {
+    		$cmd = 'chmod -R ' . $this->ownerInfo['mask'] . " $dir";
+    		shell_exec($cmd);
+    	}
+
+    	return true;
 
     }
 

@@ -53,7 +53,10 @@ Optional Settings
 
 Ignore some branches
 
-`->setIgnoreBranches( array('old','deleteme') )`
+->setIgnoreBranches(array('old','deleteme'))
+
+Set user/group/permissions
+->setPermissions('www-data', 'www-data', '774')
 
 Methods that run after events
 --------
