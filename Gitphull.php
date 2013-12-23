@@ -96,6 +96,12 @@ class Gitphull {
     protected $branchDiffsFileLocation = null;
 
     /**
+     * Name of the static file to write out, relative to the masterDir
+     * @var string
+     */
+    protected $liveDiffFileLocation = null;
+
+    /**
      * Array of connection info for pivotal tracker
      * @var array
      */
@@ -112,6 +118,18 @@ class Gitphull {
      * @var array
      */
     protected $current = array();
+
+    /**
+     * Url to a page that returns the hash of the release that is in production
+     * @var string
+     */
+    protected $urlCurrentHash = null;
+
+    /**
+     * Array of commits comparing local master to production master (requires urlCurrentHash to kno where production master is at)
+     * @var unknown
+     */
+    protected $liveLog = null;
 
     /**
      * Checkout or update all branches that aren't ignored.
@@ -152,6 +170,11 @@ class Gitphull {
     		// diff $master with all other known branches, generate an html file of commits that aren't merged
     		$this->generateBranchDiffs();
 
+    		// show commits that are not live
+    		if($this->liveDiffFileLocation) {
+    			$this->wrteLiveDiff();
+    		}
+
     		// we aren't currently operating on a branch, so nuke this data
     		$this->current = array();
 
@@ -191,6 +214,26 @@ class Gitphull {
      */
     public function setBranchDiffsFileLocation($location) {
     	$this->branchDiffsFileLocation = $location;
+    	return $this;
+    }
+
+    /**
+     * The location to write out a branch diffs file
+     * @param string $location
+     * @return Gitphull
+     */
+    public function setLiveDiffFileLocation($location) {
+    	$this->liveDiffFileLocation = $location;
+    	return $this;
+    }
+
+    /**
+     * Url to a page which returns the hash of the release that is currently in production
+     * @param string $location
+     * @return Gitphull
+     */
+    public function setUrlCurrentHash($location) {
+    	$this->urlCurrentHash = $location;
     	return $this;
     }
 
@@ -399,8 +442,8 @@ class Gitphull {
      * @param string $branch
      */
     protected function klone($branch) {
-    	$dir = $this->current['getPath'];
-    	$cmd = "git clone --branch=$branch {$this->repo} {$this->location}{$this->prefix}{$dir}";
+    	$dir = $this->current['gitPath'];
+    	$cmd = "git clone --branch=$branch {$this->repo} {$dir}";
     	$this->msg($cmd);
     	$this->runCommand($cmd);
     	$cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
@@ -510,7 +553,7 @@ class Gitphull {
 	    	if($result == '1') {
 	    		$this->msg('created ' . $dir);
 	    	} else {
-	    		$this->msg('could not create!! ' . $dir);
+	    		$this->msg('could not create ' . $dir);
 	    		throw new Exception('could not create branch dir ' . $dir);
 	    	}
 		}
@@ -563,6 +606,25 @@ class Gitphull {
     }
 
     /**
+     * If the repo is on github, get the path to it
+     * @return Ambigous <NULL, string>
+     */
+    protected function getRepoPath() {
+    	$repoPath = null;
+    	$repoFound = preg_match('/https:\/\/github.com(.*)\.git/', $this->repo,$match);
+    	if($repoFound) {
+    		$repoPath = $match[1];
+    	}
+    	if(!$repoPath) {
+    		$repoFound = preg_match('/git@github.com:(.*)\.git/', $this->repo,$match);
+    		if($repoFound) {
+    			$repoPath = '/' . $match[1];
+    		}
+    	}
+    	return $repoPath;
+    }
+
+    /**
      * Generate a diff of branches (compared to master)
      */
     protected function generateBranchDiffs() {
@@ -570,17 +632,8 @@ class Gitphull {
 			return;
 		}
 
-		$repoPath = null;
-		$repoFound = preg_match('/https:\/\/github.com(.*)\.git/', $this->repo,$match);
-		if($repoFound) {
-			$repoPath = $match[1];
-		}
-		if(!$repoPath) {
-			$repoFound = preg_match('/git@github.com:(.*)\.git/', $this->repo,$match);
-			if($repoFound) {
-				$repoPath = '/' . $match[1];
-			}
-		}
+		// so we can link to github
+		$repoPath = $this->getRepoPath();
 
 		$html = '<html><head><title>Branches</title></head><body>';
 
@@ -673,7 +726,7 @@ class Gitphull {
      * @param string $pivStoryId
      * @return mixed
      */
-    function getPivInfo($pivStoryId) {
+    protected function getPivInfo($pivStoryId) {
 
 		$token = $this->piv['token'];
 		$url = $this->piv['url'] . $pivStoryId;
@@ -689,5 +742,159 @@ class Gitphull {
 
 		return $json;
     }
+
+    /**
+     * Compare log of local master, relative to where production master is at.
+     * Lists commits in local master that aren't in production yet.
+     * Sets data in $this->liveData
+     * @return Gitphull
+     */
+    protected function liveDiff() {
+
+	    // find current branch
+	    $branch = $this->masterBranch;
+
+	    $this->msg("Current branch: $branch");
+	    $rs = null;
+
+	    // https://github.com/deseretdigital/deseret-connect/commit/18eeb230676c4faa81e009ff263376420362aea6
+		// https://www.pivotaltracker.com/story/show/30848279
+
+		// get live version (hash)
+		@$liveHash = trim(file_get_contents($this->urlCurrentHash));
+		$this->msg('live hash = ' . $liveHash);
+		if(!$liveHash) {
+			$this->liveLog = null;
+			return $this;
+		}
+
+		if(!$this->masterDir) {
+			$this->masterDir = $this->location . $this->prefix . $this->masterBranch;
+		}
+
+		// commits are stored in here
+		$log = array();
+		$limit = 30;
+
+		$cmd = "git --git-dir={$this->masterDir}/.git --work-tree={$this->masterDir}/ log -$limit";
+		exec($cmd, $rs);
+
+		$foundLive = false;
+		$style = '';
+		$status = '';
+		if(count($rs)) {
+			$item = array();
+			foreach($rs as $line) {
+				// is this the start of a new commit?
+				if(strpos($line, 'commit') !== false) {
+
+					//ignore merges
+	    			if(!empty($item['merge']) && $item['github'] != $liveHash) {
+		   				$item = array();
+	    			}
+
+	    			// output current entry and reset
+	    			if(count($item)){
+	    				$log[] = $item;
+	    				$item = array();
+	    			}
+
+					$cmt = str_replace('commit ', '', $line);
+	    			$insert = '';
+	    			if($cmt == $liveHash) {
+	    				$insert = '<div style="background-color: #900; color:#FFF; padding:2px;">Live</div>';
+	    				$item['live'] = true;
+	    				$foundLive = true;
+	    				$style = '';
+	    				$state = '';
+	    			}
+	    			$line = substr($line, 0, 15); // we don't need the whole hash
+
+	    			//$item['insert'] = $insert;
+	    			$item['github'] = $cmt;
+
+	    		} else {
+					// this is just a new line on an existing entry(commit)
+					// find a piv number - ok any number, we aren't picky - and hope it is right
+                    $piv = 0;
+                    if(!empty($this->piv)) {
+						//preg_match('/([0-9]{6,10})\]/', $line, $matches);
+		    			preg_match('/#([0-9]{6,10})/', $line, $matches);
+		    			if(!empty($matches[1])) {
+		    				$piv = (int) $matches[1];
+		    			}
+                    }
+
+	    			if($piv > 0 ) {
+	    				$bg = '#FFF';
+	    				$item['pivId'] = $piv;
+	    				if(!$foundLive || 1) {
+	    					$pivInfo = $this->getPivInfo($piv);
+	    					$item['piv'] = $pivInfo;
+	    					$status = trim(strtolower($pivInfo['current_state']));
+	    					if($status != '') {
+	    						$item['status'] = $status;
+	    					}
+	    				}
+	    				//$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
+	    				$link = '';
+	    				//$line = str_replace('[#' . $piv . ']', '<span style="float:right">[#'. $link . ']</span>', $line);
+	    				$style = "background-color: $bg ;";
+	    			}
+					if(strpos($line, 'Author') !== false) {
+    					$item['author'] = $line;
+    				} else if(strpos($line, 'Merge') !== false) {
+    					$item['merge'] = $line;
+    				} else if(strpos($line, 'Date') === 0) {
+    					@$item['date'] .= $line;
+    				} else {
+    					if(empty($item['body'])) {
+    						$item['body'] = $line;
+    					} else {
+    						$item['body'] .= $line;
+    					}
+    				}
+    			}
+
+    		} // foreach
+
+    		// output last entry
+    		$style = '';
+    		if(count($item)){
+    			$log[] = $item;
+    			$item = array();
+    		}
+
+		$this->liveLog = $log;
+
+		return $this;
+
+		}
+
+
+	} // end live()
+
+
+	public function wrteLiveDiff() {
+
+		if(empty($this->liveLog)) {
+			$this->liveDiff();
+		}
+		if(empty($this->liveLog)) {
+			return 'Unable to render report';
+		}
+
+		$this->repoPath = $this->getRepoPath();
+
+		ob_start();
+		include_once 'liveLog.php';
+		$contents = ob_get_contents();
+		ob_end_clean();
+
+		$location = $this->masterDir . '/live.html';
+		file_put_contents($location, $contents);
+
+		exit;
+	}
 
 }
