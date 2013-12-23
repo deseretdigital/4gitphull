@@ -90,6 +90,24 @@ class Gitphull {
     protected $invalidBranchCharacters = array('-','_','/');
 
     /**
+     * Name of the static file to write out, relative to the masterDir
+     * @var string
+     */
+    protected $branchDiffsFileLocation = null;
+
+    /**
+     * Array of connection info for pivotal tracker
+     * @var array
+     */
+    protected $piv = array();
+
+    /**
+     * Domain for this project (example.com)
+     * @var string
+     */
+    protected $domain;
+
+    /**
      * Checkout or update all branches that aren't ignored.
      */
     public function run() {
@@ -123,6 +141,8 @@ class Gitphull {
     		/* Clone or update other remote branches */
     		$this->checkoutBranches($remotes);
 
+    		$this->generateBranchDiffs();
+
     		$this->afterRun();
 
     	} catch (Exception $e) {
@@ -150,6 +170,38 @@ class Gitphull {
     {
         $this->invalidBranchCharacters = $array;
         return $this;
+    }
+
+    /**
+     * The location to write out a branch diffs file
+     * @param string $location
+     * @return Gitphull
+     */
+    public function setBranchDiffsFileLocation($location) {
+    	$this->branchDiffsFileLocation = $location;
+    	return $this;
+    }
+
+    /**
+     * Set token and URL for pivotal tracker
+     * @param string $token
+     * @param string $apiUrl
+     * @return Gitphull
+     */
+    public function setPivotalTracker($token, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/') {
+    	$this->piv['token'] = $token;
+    	$this->piv['url'] = $apiUrl;
+    	return $this;
+    }
+
+    /**
+     * Branches will appear as sub domains of this domain.
+     * @param string $domain
+     * @return Gitphull
+     */
+    public function setDomain($domain) {
+    	$this->domain = $domain;
+    	return $this;
     }
 
     /**
@@ -477,6 +529,134 @@ class Gitphull {
 
     	return true;
 
+    }
+
+    /**
+     * Generate a diff of branches (compared to master)
+     */
+    protected function generateBranchDiffs() {
+		if(empty($this->branchDiffsFileLocation)) {
+			return;
+		}
+
+		$repoPath = null;
+		$repoFound = preg_match('/https:\/\/github.com(.*)\.git/', $this->repo,$match);
+		if($repoFound) {
+			$repoPath = $match[1];
+		}
+		if(!$repoPath) {
+			$repoFound = preg_match('/git@github.com:(.*)\.git/', $this->repo,$match);
+			if($repoFound) {
+				$repoPath = '/' . $match[1];
+			}
+		}
+
+		$html = '<html><head><title>Branches</title></head><body>';
+
+		// write out an index of branches
+		$html .= '<table width=200 cellspacing=0 cellpadding=2><tr><td>Branch</td><td>Changes</td></tr>';
+		foreach($this->currentBranches as $b) {
+			$result = null;
+			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
+			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+			$html .= '<tr><td><a href="http://'. $branchPath .'.' . $this->domain . '/">' . $b . "</a></td><td><a href=\"#$branchPath\">Changes</a><BR></td></tr>\n";
+		}
+		$html .= '</table><hr>';
+
+
+		/* try to grab some log info */
+		foreach($this->currentBranches as $b) {
+
+			if($b == $this->masterBranch) {
+				continue;
+			}
+
+			$result = null;
+			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
+			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+
+			if($repoPath) {
+				$html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
+			} else {
+				$html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
+			}
+
+			// diff this branch with master and output the resutls to html
+			$cmd = "git --git-dir=$historyDir/.git --work-tree=\"$historyDir\" log $b ^{$this->masterBranch} --no-merges";
+			// git --git-dir=/var/www/connect_api/.git --work-tree="/var/www/connect_api" log api ^master --no-merges
+			//$html .= $cmd . '<BR>';
+			exec($cmd, $result);
+			if(count($result)> 0) {
+				foreach($result as $line) {
+
+					$piv = 0;
+					$status = '';
+					if(!empty($this->piv->token)) {
+
+						// find a piv number - ok any number and hope it is right
+						//preg_match('/([0-9]{6,10})\]/', $line, $matches);
+						preg_match('/#([0-9]{6,10})/', $line, $matches);
+						if(!empty($matches[1])) {
+							$piv = (int) $matches[1];
+						}
+
+						$status = '';
+						if($piv > 0 ) {
+							$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
+							$line = str_replace($piv, $link, $line);
+							$pivInfo = $this->getPivInfo($piv);
+							$status = trim(strtolower($pivInfo['current_state']));
+						}
+					}
+
+					// look for commit hash
+					preg_match('/commit [0-9a-f]{40}/', $line, $commits);
+					if(!empty($commits[0])) {
+						$commit = str_replace('commit ', '', $commits[0]);
+						$link = '<a href="https://github.com'. $repoPath .'/commit/'. $commit .'" target="gh">'. $commit . "</a>";
+						$line = str_replace($commit, $link, $line);
+					}
+
+					if($piv > 0 && !empty($status)) {
+						$line = $status . '<BR>' . $line;
+					}
+
+					$html .= $line . "<br>\n";
+				}
+			}
+
+			$html .= "<hr>";
+		}
+
+		$html .= '</body></html>';
+		$indexFile = $this->masterDir . $this->branchDiffsFileLocation;
+		$this->msg('Write diff file to ' . $indexFile);
+		file_put_contents($indexFile, $html);
+
+
+
+    }
+
+    /**
+     * Hit pivotal tracker to get info on the story
+     * @param string $pivStoryId
+     * @return mixed
+     */
+    function getPivInfo($pivStoryId) {
+
+		$token = $this->piv['token'];
+		$url = $this->piv['url'] . $pivStoryId;
+		$ch = curl_init();
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    			"X-TrackerToken: $token"
+		));
+		$result = curl_exec($ch);
+		curl_close($ch);
+		$json = json_decode($result, true);
+
+		return $json;
     }
 
 }
