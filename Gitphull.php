@@ -459,7 +459,7 @@ class Gitphull {
     	$this->runCommand($cmd);
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout " . $this->masterBranch;
-    	$this->msg("Hard reset on $gitPath");
+    	$this->msg("Update ". $this->masterBranch . " on $gitPath");
     	$this->runCommand($cmd);
     	$cmd = "cd $gitPath ; git pull";
     	$this->msg($cmd);
