@@ -329,6 +329,8 @@ class Gitphull {
     		$branches = array($branches);
     	}
     	$this->onlyBranches = $branches;
+    	// can't ignore the master
+    	unset($this->onlyBranches[$this->masterBranch]);
     	return $this;
     }
 
@@ -417,7 +419,7 @@ class Gitphull {
     		if(in_array($branch, $this->ignoreBranches)) {
     			continue; // skip branches not managed by this script
     		}
-    		if(!empty($this->onlyBranches) && !array_key_exists($t, $this->onlyBranches) ) {
+    		if(!empty($this->onlyBranches) && !in_array($t, $this->onlyBranches) ) {
     			continue; // if we want only some branches, ignroe all others
     		}
     		$currentBranches[] = trim($branch);
@@ -434,7 +436,7 @@ class Gitphull {
     		if(in_array($b, $this->ignoreBranches)) {
     			continue;
     		}
-    		if(!empty($this->onlyBranches) && !array_key_exists($b, $this->onlyBranches) ) {
+    		if(!empty($this->onlyBranches) && !in_array($b, $this->onlyBranches) ) {
     			continue; // if we want only some branches, ignroe all others
     		}
     		$this->msg("Checkout Branch $b");
