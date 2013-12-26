@@ -54,6 +54,10 @@ Optional Settings
 Ignore some branches
 
     ->setIgnoreBranches(array('old','deleteme'))
+    
+Only pull these branches
+
+    ->setOnlyBranches(array('master','feature1'))    
 
 Set a list of characters that are invalid (or you don't want used) in the path where the branch will live
 
