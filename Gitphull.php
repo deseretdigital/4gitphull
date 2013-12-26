@@ -66,6 +66,12 @@ class Gitphull {
     protected $ignoreBranches = array();
 
     /**
+     * An array of branch names to pull, all others will be ignored
+     * @var array
+     */
+    protected $onlyBranches = array();
+
+    /**
      * Array of branches that currently exist on the filesystem
      * @var array
      */
@@ -314,6 +320,19 @@ class Gitphull {
     }
 
     /**
+     * Branch names that should be pulled, ignore all others
+     * @param array $branches
+     * @return gitphull
+     */
+    public function setOnlyBranches($branches) {
+    	if(!is_array($branches)) {
+    		$branches = array($branches);
+    	}
+    	$this->onlyBranches = $branches;
+    	return $this;
+    }
+
+    /**
      * Set the branch dir prefix (location.prefix.branchName)
      * @param string $prefix
      * @return gitphull
@@ -398,6 +417,9 @@ class Gitphull {
     		if(in_array($branch, $this->ignoreBranches)) {
     			continue; // skip branches not managed by this script
     		}
+    		if(!empty($this->onlyBranches) && !array_key_exists($t, $this->onlyBranches) ) {
+    			continue; // if we want only some branches, ignroe all others
+    		}
     		$currentBranches[] = trim($branch);
     	}
     	return $currentBranches;
@@ -411,6 +433,9 @@ class Gitphull {
     	foreach($branches as $b) {
     		if(in_array($b, $this->ignoreBranches)) {
     			continue;
+    		}
+    		if(!empty($this->onlyBranches) && !array_key_exists($b, $this->onlyBranches) ) {
+    			continue; // if we want only some branches, ignroe all others
     		}
     		$this->msg("Checkout Branch $b");
     		$this->updateOrClone($b);
@@ -653,7 +678,7 @@ class Gitphull {
 			}
 			$html .= '<tr><td><a href="http://'. $branchPath .'.' . $this->domain . '/">' . $b . "</a></td><td><a href=\"#$branchPath\">Changes</a><BR></td></tr>\n";
 		}
-		$html .= '</table>';
+		$html .= '</table><hr>';
 
 
 		/* try to grab some log info */
