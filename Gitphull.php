@@ -415,14 +415,15 @@ class Gitphull {
     		if(strpos($t, $this->prefix) !== 0) {
     			continue; // does not start with prefix
     		}
-    		$branch = str_replace($this->prefix, '', $t);
+    		$branch = str_replace($this->prefix, '', trim($t));
+
     		if(in_array($branch, $this->ignoreBranches)) {
     			continue; // skip branches not managed by this script
     		}
-    		if(!empty($this->onlyBranches) && !in_array($t, $this->onlyBranches) ) {
+    		if(!empty($this->onlyBranches) && !in_array($branch, $this->onlyBranches) ) {
     			continue; // if we want only some branches, ignroe all others
     		}
-    		$currentBranches[] = trim($branch);
+    		$currentBranches[] = $branch;
     	}
     	return $currentBranches;
     }
@@ -456,6 +457,12 @@ class Gitphull {
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
     	$this->msg("Hard reset on $gitPath");
     	$this->runCommand($cmd);
+
+    	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout " . $this->masterBranch;
+    	$this->msg("Hard reset on $gitPath");
+    	$this->runCommand($cmd);
+    	$cmd = "cd $gitPath ; git pull";
+    	$this->msg($cmd);
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout $branch";
     	$this->runCommand($cmd);
@@ -705,6 +712,7 @@ class Gitphull {
 			// git --git-dir=/var/www/connect_api/.git --work-tree="/var/www/connect_api" log api ^master --no-merges
 			//$html .= $cmd . '<BR>';
 			exec($cmd, $result);
+
 			if(count($result)> 0) {
 				foreach($result as $line) {
 
