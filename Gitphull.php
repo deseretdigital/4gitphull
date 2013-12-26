@@ -140,6 +140,10 @@ class Gitphull {
 
     		$this->currentBranches = $this->getCheckedOutBranches();
 
+    		if($this->currentBranches[0] == '') {
+    			unset($this->currentBranches[0]);
+    		}
+
     		/* Checkout "master" */
     		$this->ignoreBranches[] = $this->masterBranch; // ignore it, it is special
     		$this->masterDir = $this->location . $this->prefix . $this->masterBranch;
@@ -643,21 +647,25 @@ class Gitphull {
 			$result = null;
 			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
 			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+
+			if($b == $this->masterBranch || $branchPath == '') {
+				continue;
+			}
 			$html .= '<tr><td><a href="http://'. $branchPath .'.' . $this->domain . '/">' . $b . "</a></td><td><a href=\"#$branchPath\">Changes</a><BR></td></tr>\n";
 		}
-		$html .= '</table><hr>';
+		$html .= '</table>';
 
 
 		/* try to grab some log info */
 		foreach($this->currentBranches as $b) {
 
-			if($b == $this->masterBranch) {
-				continue;
-			}
-
 			$result = null;
 			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
 			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+
+			if($b == $this->masterBranch) {
+				continue;
+			}
 
 			if($repoPath) {
 				$html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
@@ -675,7 +683,7 @@ class Gitphull {
 
 					$piv = 0;
 					$status = '';
-					if(!empty($this->piv->token)) {
+					if(!empty($this->piv['token'])) {
 
 						// find a piv number - ok any number and hope it is right
 						//preg_match('/([0-9]{6,10})\]/', $line, $matches);
