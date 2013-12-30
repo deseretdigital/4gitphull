@@ -1,4 +1,18 @@
 <?php
+
+$script = $_SERVER['PWD'] . '/' . $_SERVER['SCRIPT_NAME'];
+$scriptInfo = pathInfo($script);
+$lockfile = $scriptInfo['dirname'] . '/' . '.lock_' . $scriptInfo['filename'];
+$lockhandle = fopen($lockfile, 'w+');
+if(!flock($lockhandle, LOCK_EX | LOCK_NB)) {
+    exit();
+}
+
+register_shutdown_function(function() use($lockhandle, $lockfile) {
+    fclose($lockhandle);
+    unlink($lockfile);
+});
+
  /**
   * @name Gitphull
   * @version 1.0
@@ -76,6 +90,12 @@ class Gitphull {
      * @var array
      */
     protected $currentBranches = array();
+
+    /**
+     * Array of remote branches with their current revision hash
+     * @var array
+     */
+    protected $remoteRefs = array();
 
     /**
      * The location of your master branch
@@ -173,6 +193,26 @@ class Gitphull {
     		$this->msg(print_r($remotes, true));
     		// also sets branch, branchPath, gitPath in $this->current
     		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
+
+            // Figure out which branches to update
+            exec('git ls-remote --heads', $remoteOut);
+            exec('git show-ref', $localOut);
+            foreach($remoteOut as $line) {
+                preg_match('|^([0-9a-f]+)\s+refs/heads/(?!HEAD)(.+)|', $line, $match);
+                if(!empty($match)) {
+                    $this->remoteRefs[$match[2]] = $match[1];
+                }
+            }
+            /*$localRefs = array();
+            foreach($localOut as $line) {
+                preg_match('|^([0-9a-f]+)\s+refs/remotes/origin/(?!HEAD)(.+)|', $line, $match);
+                if(!empty($match)) {
+                    $localRefs[$match[2]] = $match[1];
+                }
+            }
+
+            // Key will be updated branch name, value will be remote branch hash
+            $this->updateBranches = array_diff($remoteRefs, $localRefs);*/
 
     		/* Clone or update other remote branches */
     		$this->checkoutBranches($remotes);
@@ -412,7 +452,7 @@ class Gitphull {
     		if(!is_dir($this->location . $t)) {
     			continue; // only looking for dirs
     		}
-    		if(strpos($t, $this->prefix) !== 0) {
+    		if($this->prefix && strpos($t, $this->prefix) !== 0) {
     			continue; // does not start with prefix
     		}
     		$branch = str_replace($this->prefix, '', trim($t));
@@ -452,6 +492,15 @@ class Gitphull {
     protected function update($branch) {
 
         $gitPath = $this->current['gitPath'];
+
+        // See if we actually need to update this branch
+        exec("git --git-dir=\"$gitPath/.git\" --work-tree=\"$gitPath\" log -n 1 --pretty=format:\"%H\"", $out, $result);
+        if(!$result && array_key_exists($branch, $this->remoteRefs)) {
+            if($this->remoteRefs[$branch] == $out[0]) {
+                return;
+            }
+        }
+
         $this->beforeBranchUpdate($branch);
 
     	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
@@ -561,7 +610,7 @@ class Gitphull {
     }
 
     /**
-     * Update or cloen a branch
+     * Update or clone a branch
      * @param string $branch
      */
     protected function updateOrClone($branch) {
@@ -584,7 +633,7 @@ class Gitphull {
     		$cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" fetch";
     		$this->msg($cmd);
     		$this->runCommand($cmd);
-    		$this->msg("purned and fetched " . $this->masterBranch);
+    		$this->msg("pruned and fetched " . $this->masterBranch);
     	}
 
 		if(!file_exists($dir)) {
