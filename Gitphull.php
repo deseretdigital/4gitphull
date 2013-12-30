@@ -468,7 +468,8 @@ class Gitphull {
     	$this->runCommand($cmd);
     	$cmd = "cd $gitPath ; git pull";
     	$this->msg($cmd);
-    	system($cmd, $result);
+        exec($cmd, $output, $result);
+        $this->current['updated'] = $output[0] != 'Already up-to-date.';
     	$cmd = "touch $gitPath/managedbranch.txt";
     	$this->msg($cmd);
     	$this->runCommand($cmd);
