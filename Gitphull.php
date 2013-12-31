@@ -1,10 +1,11 @@
 <?php
 
-$script = $_SERVER['PWD'] . '/' . $_SERVER['SCRIPT_NAME'];
+$script = substr($_SERVER['SCRIPT_NAME'], 0, 1) == '/' ? $_SERVER['SCRIPT_NAME'] : ($_SERVER['PWD'] . '/' . $_SERVER['SCRIPT_NAME']);
 $scriptInfo = pathInfo($script);
 $lockfile = $scriptInfo['dirname'] . '/' . '.lock_' . $scriptInfo['filename'];
 $lockhandle = fopen($lockfile, 'w+');
 if(!flock($lockhandle, LOCK_EX | LOCK_NB)) {
+    echo "Process is already running... exiting\n";
     exit();
 }
 
