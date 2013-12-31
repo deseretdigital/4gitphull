@@ -183,7 +183,16 @@ class Gitphull {
     				//$this->msg('could not create ' . $this->masterDir);
     				throw new Exception('could not create dir: ' . $this->masterDir);
     			}
-    		}
+    		} else {
+                // Figure out which branches to update
+                exec("git --git-dir=\"$this->masterDir/.git\" --work-tree=\"$this->masterDir\" ls-remote --heads", $remoteOut);
+                foreach($remoteOut as $line) {
+                    preg_match('|^([0-9a-f]+)\s+refs/heads/(?!HEAD)(.+)|', $line, $match);
+                    if(!empty($match)) {
+                        $this->remoteRefs[$match[2]] = $match[1];
+                    }
+                }
+            }
 
     		// also sets branch, branchPath, gitPath in $this->current
     		$this->updateOrClone($this->masterBranch);
@@ -194,26 +203,6 @@ class Gitphull {
     		$this->msg(print_r($remotes, true));
     		// also sets branch, branchPath, gitPath in $this->current
     		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
-
-            // Figure out which branches to update
-            $masterRepo = $this->current['gitPath'];
-            exec("git --git-dir=\"$masterRepo/.git\" --work-tree=\"$masterRepo\" ls-remote --heads", $remoteOut);
-            foreach($remoteOut as $line) {
-                preg_match('|^([0-9a-f]+)\s+refs/heads/(?!HEAD)(.+)|', $line, $match);
-                if(!empty($match)) {
-                    $this->remoteRefs[$match[2]] = $match[1];
-                }
-            }
-            /*exec('git show-ref', $localOut);
-            foreach($localOut as $line) {
-                preg_match('|^([0-9a-f]+)\s+refs/remotes/origin/(?!HEAD)(.+)|', $line, $match);
-                if(!empty($match)) {
-                    $localRefs[$match[2]] = $match[1];
-                }
-            }
-
-            // Key will be updated branch name, value will be remote branch hash
-            $this->updateBranches = array_diff($remoteRefs, $localRefs);*/
 
     		/* Clone or update other remote branches */
     		$this->checkoutBranches($remotes);
