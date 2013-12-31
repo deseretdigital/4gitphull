@@ -163,27 +163,27 @@ class Gitphull {
      */
     public function run() {
 
-    	try {
+        try {
 
-    		$this->currentBranches = $this->getCheckedOutBranches();
+            $this->currentBranches = $this->getCheckedOutBranches();
 
-    		if($this->currentBranches[0] == '') {
-    			unset($this->currentBranches[0]);
-    		}
+            if($this->currentBranches[0] == '') {
+                unset($this->currentBranches[0]);
+            }
 
-    		/* Checkout "master" */
-    		$this->ignoreBranches[] = $this->masterBranch; // ignore it, it is special
-    		$this->masterDir = $this->location . $this->prefix . $this->masterBranch;
+            /* Checkout "master" */
+            $this->ignoreBranches[] = $this->masterBranch; // ignore it, it is special
+            $this->masterDir = $this->location . $this->prefix . $this->masterBranch;
 
-    		if(!file_exists($this->masterDir)) {
-    			@$result = mkdir($this->masterDir);
-    			if($result == '1') {
-    				$this->msg('created ' . $this->masterDir);
-    			} else {
-    				//$this->msg('could not create ' . $this->masterDir);
-    				throw new Exception('could not create dir: ' . $this->masterDir);
-    			}
-    		} else {
+            if(!file_exists($this->masterDir)) {
+                @$result = mkdir($this->masterDir);
+                if($result == '1') {
+                    $this->msg('created ' . $this->masterDir);
+                } else {
+                    //$this->msg('could not create ' . $this->masterDir);
+                    throw new Exception('could not create dir: ' . $this->masterDir);
+                }
+            } else {
                 // Figure out which branches to update
                 exec("git --git-dir=\"$this->masterDir/.git\" --work-tree=\"$this->masterDir\" ls-remote --heads", $remoteOut);
                 foreach($remoteOut as $line) {
@@ -194,36 +194,36 @@ class Gitphull {
                 }
             }
 
-    		// also sets branch, branchPath, gitPath in $this->current
-    		$this->updateOrClone($this->masterBranch);
+            // also sets branch, branchPath, gitPath in $this->current
+            $this->updateOrClone($this->masterBranch);
 
-    		$remotes = $this->getBranches($this->masterDir);
-    		$this->msg("Known remotes:");
+            $remotes = $this->getBranches($this->masterDir);
+            $this->msg("Known remotes:");
 
-    		$this->msg(print_r($remotes, true));
-    		// also sets branch, branchPath, gitPath in $this->current
-    		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
+            $this->msg(print_r($remotes, true));
+            // also sets branch, branchPath, gitPath in $this->current
+            $this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
 
-    		/* Clone or update other remote branches */
-    		$this->checkoutBranches($remotes);
+            /* Clone or update other remote branches */
+            $this->checkoutBranches($remotes);
 
-    		// diff $master with all other known branches, generate an html file of commits that aren't merged
-    		$this->generateBranchDiffs();
+            // diff $master with all other known branches, generate an html file of commits that aren't merged
+            $this->generateBranchDiffs();
 
-    		// show commits that are not live
-    		if($this->liveDiffFileLocation) {
-    			$this->writeLiveDiff();
-    		}
+            // show commits that are not live
+            if($this->liveDiffFileLocation) {
+                $this->writeLiveDiff();
+            }
 
-    		// we aren't currently operating on a branch, so nuke this data
-    		$this->current = array();
+            // we aren't currently operating on a branch, so nuke this data
+            $this->current = array();
 
-    		$this->afterRun();
+            $this->afterRun();
 
-    	} catch (Exception $e) {
-    		$this->msg("Exception caught in run():\n" . $e->getMessage() . "\n\n");
-    		exit;
-    	}
+        } catch (Exception $e) {
+            $this->msg("Exception caught in run():\n" . $e->getMessage() . "\n\n");
+            exit;
+        }
     }
 
     /**
@@ -253,8 +253,8 @@ class Gitphull {
      * @return Gitphull
      */
     public function setBranchDiffsFileLocation($location) {
-    	$this->branchDiffsFileLocation = $location;
-    	return $this;
+        $this->branchDiffsFileLocation = $location;
+        return $this;
     }
 
     /**
@@ -263,8 +263,8 @@ class Gitphull {
      * @return Gitphull
      */
     public function setLiveDiffFileLocation($location) {
-    	$this->liveDiffFileLocation = $location;
-    	return $this;
+        $this->liveDiffFileLocation = $location;
+        return $this;
     }
 
     /**
@@ -273,8 +273,8 @@ class Gitphull {
      * @return Gitphull
      */
     public function setUrlCurrentHash($location) {
-    	$this->urlCurrentHash = $location;
-    	return $this;
+        $this->urlCurrentHash = $location;
+        return $this;
     }
 
     /**
@@ -284,9 +284,9 @@ class Gitphull {
      * @return Gitphull
      */
     public function setPivotalTracker($token, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/') {
-    	$this->piv['token'] = $token;
-    	$this->piv['url'] = $apiUrl;
-    	return $this;
+        $this->piv['token'] = $token;
+        $this->piv['url'] = $apiUrl;
+        return $this;
     }
 
     /**
@@ -295,8 +295,8 @@ class Gitphull {
      * @return Gitphull
      */
     public function setDomain($domain) {
-    	$this->domain = $domain;
-    	return $this;
+        $this->domain = $domain;
+        return $this;
     }
 
     /**
@@ -307,10 +307,10 @@ class Gitphull {
      * @return Gitphull
      */
     public function setPermissions($user, $group, $mask) {
-    	$this->ownerInfo['user'] = $user;
-    	$this->ownerInfo['group'] = $group;
-    	$this->ownerInfo['mask'] = $mask;
-    	return $this;
+        $this->ownerInfo['user'] = $user;
+        $this->ownerInfo['group'] = $group;
+        $this->ownerInfo['mask'] = $mask;
+        return $this;
     }
 
     /**
@@ -322,8 +322,8 @@ class Gitphull {
         if (substr($dir, -1) !== '/') {
             $dir .= '/';
         }
-    	$this->location = $dir;
-    	return $this;
+        $this->location = $dir;
+        return $this;
     }
 
     /**
@@ -332,8 +332,8 @@ class Gitphull {
      * @return gitphull
      */
     public function setMasterBranch($branch) {
-    	$this->masterBranch = $branch;
-    	return $this;
+        $this->masterBranch = $branch;
+        return $this;
     }
 
     /**
@@ -345,8 +345,8 @@ class Gitphull {
         if(!is_array($branches)) {
             $branches = array($branches);
         }
-    	$this->ignoreBranches = $branches;
-    	return $this;
+        $this->ignoreBranches = $branches;
+        return $this;
     }
 
     /**
@@ -355,13 +355,13 @@ class Gitphull {
      * @return gitphull
      */
     public function setOnlyBranches($branches) {
-    	if(!is_array($branches)) {
-    		$branches = array($branches);
-    	}
-    	$this->onlyBranches = $branches;
-    	// can't ignore the master
-    	unset($this->onlyBranches[$this->masterBranch]);
-    	return $this;
+        if(!is_array($branches)) {
+            $branches = array($branches);
+        }
+        $this->onlyBranches = $branches;
+        // can't ignore the master
+        unset($this->onlyBranches[$this->masterBranch]);
+        return $this;
     }
 
     /**
@@ -379,7 +379,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function afterRun() {
-    	// restart your web server, submit an online order for pizza?
+        // restart your web server, submit an online order for pizza?
     }
 
     /**
@@ -387,7 +387,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function afterBranchClone($branch) {
-    	// maybe make some symlinks?
+        // maybe make some symlinks?
     }
 
     /**
@@ -395,7 +395,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function beforeBranchUpdate($branch) {
-    	// any additional tasks after $branch is updated
+        // any additional tasks after $branch is updated
     }
 
     /**
@@ -403,7 +403,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function afterBranchUpdate($branch) {
-    	// any additional tasks after $branch is updated
+        // any additional tasks after $branch is updated
     }
 
     /**
@@ -411,7 +411,7 @@ class Gitphull {
      * @param string $branch
      */
     protected function afterBranchDelete($branch) {
-    	// any additional cleanup after $branch is deleted
+        // any additional cleanup after $branch is deleted
     }
 
     /**
@@ -436,26 +436,26 @@ class Gitphull {
      * @return array
      */
     protected function getCheckedOutBranches() {
-    	$currentBranches = array(); // branches that exist and are managed by this script
-    	$tmp = scandir($this->location);
-    	foreach($tmp as $t) {
-    		if(!is_dir($this->location . $t)) {
-    			continue; // only looking for dirs
-    		}
-    		if($this->prefix && strpos($t, $this->prefix) !== 0) {
-    			continue; // does not start with prefix
-    		}
-    		$branch = str_replace($this->prefix, '', trim($t));
+        $currentBranches = array(); // branches that exist and are managed by this script
+        $tmp = scandir($this->location);
+        foreach($tmp as $t) {
+            if(!is_dir($this->location . $t)) {
+                continue; // only looking for dirs
+            }
+            if($this->prefix && strpos($t, $this->prefix) !== 0) {
+                continue; // does not start with prefix
+            }
+            $branch = str_replace($this->prefix, '', trim($t));
 
-    		if(in_array($branch, $this->ignoreBranches)) {
-    			continue; // skip branches not managed by this script
-    		}
-    		if(!empty($this->onlyBranches) && !in_array($branch, $this->onlyBranches) ) {
-    			continue; // if we want only some branches, ignroe all others
-    		}
-    		$currentBranches[] = $branch;
-    	}
-    	return $currentBranches;
+            if(in_array($branch, $this->ignoreBranches)) {
+                continue; // skip branches not managed by this script
+            }
+            if(!empty($this->onlyBranches) && !in_array($branch, $this->onlyBranches) ) {
+                continue; // if we want only some branches, ignroe all others
+            }
+            $currentBranches[] = $branch;
+        }
+        return $currentBranches;
     }
 
     /**
@@ -463,16 +463,16 @@ class Gitphull {
      * @param array $branches
      */
     protected function checkoutBranches($branches) {
-    	foreach($branches as $b) {
-    		if(in_array($b, $this->ignoreBranches)) {
-    			continue;
-    		}
-    		if(!empty($this->onlyBranches) && !in_array($b, $this->onlyBranches) ) {
-    			continue; // if we want only some branches, ignroe all others
-    		}
-    		$this->msg("Checkout Branch $b");
-    		$this->updateOrClone($b);
-    	}
+        foreach($branches as $b) {
+            if(in_array($b, $this->ignoreBranches)) {
+                continue;
+            }
+            if(!empty($this->onlyBranches) && !in_array($b, $this->onlyBranches) ) {
+                continue; // if we want only some branches, ignroe all others
+            }
+            $this->msg("Checkout Branch $b");
+            $this->updateOrClone($b);
+        }
     }
 
     /**
@@ -493,25 +493,25 @@ class Gitphull {
 
         $this->beforeBranchUpdate($branch);
 
-    	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
-    	$this->msg("Hard reset on $gitPath");
-    	$this->runCommand($cmd);
+        $cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" reset --hard";
+        $this->msg("Hard reset on $gitPath");
+        $this->runCommand($cmd);
 
-    	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout " . $this->masterBranch;
-    	$this->msg("Update ". $this->masterBranch . " on $gitPath");
-    	$this->runCommand($cmd);
-    	$cmd = "cd $gitPath ; git pull";
-    	$this->msg($cmd);
+        $cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout " . $this->masterBranch;
+        $this->msg("Update ". $this->masterBranch . " on $gitPath");
+        $this->runCommand($cmd);
+        $cmd = "cd $gitPath ; git pull";
+        $this->msg($cmd);
 
-    	$cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout $branch";
-    	$this->runCommand($cmd);
-    	$cmd = "cd $gitPath ; git pull";
-    	$this->msg($cmd);
+        $cmd = "git --git-dir=$gitPath/.git --work-tree=\"$gitPath\" checkout $branch";
+        $this->runCommand($cmd);
+        $cmd = "cd $gitPath ; git pull";
+        $this->msg($cmd);
         exec($cmd, $output, $result);
         $this->current['updated'] = $output[0] != 'Already up-to-date.';
-    	$cmd = "touch $gitPath/managedbranch.txt";
-    	$this->msg($cmd);
-    	$this->runCommand($cmd);
+        $cmd = "touch $gitPath/managedbranch.txt";
+        $this->msg($cmd);
+        $this->runCommand($cmd);
 
     }
 
@@ -520,13 +520,13 @@ class Gitphull {
      * @param string $branch
      */
     protected function klone($branch) {
-    	$dir = $this->current['gitPath'];
-    	$cmd = "git clone --branch=$branch {$this->repo} {$dir}";
-    	$this->msg($cmd);
-    	$this->runCommand($cmd);
-    	$cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
-    	$this->msg($cmd);
-    	$this->runCommand($cmd);
+        $dir = $this->current['gitPath'];
+        $cmd = "git clone --branch=$branch {$this->repo} {$dir}";
+        $this->msg($cmd);
+        $this->runCommand($cmd);
+        $cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
+        $this->msg($cmd);
+        $this->runCommand($cmd);
     }
 
     /**
@@ -535,21 +535,21 @@ class Gitphull {
      */
     protected function getBranches() {
         $location = $this->location . $this->prefix . $this->masterBranch;
-    	$cmd = "git --git-dir=$location/.git --work-tree=\"$location\" branch -r";
-    	$this->msg($cmd);
-    	$rs = shell_exec($cmd);
-    	$lines = preg_split("/\n/", trim($rs));
-    	foreach($lines as $k => &$l) {
-    		$l = trim(str_replace('origin/', '', $l));
+        $cmd = "git --git-dir=$location/.git --work-tree=\"$location\" branch -r";
+        $this->msg($cmd);
+        $rs = shell_exec($cmd);
+        $lines = preg_split("/\n/", trim($rs));
+        foreach($lines as $k => &$l) {
+            $l = trim(str_replace('origin/', '', $l));
             // Some repos have an entry called "HEAD -> master", we want to ignore this
             // remote. Check for any remotes that have a space in them.
             if(strpos($l, ' ') !== false)
             {
                 unset($lines[$k]);
             }
-    	}
+        }
 
-    	return $lines;
+        return $lines;
     }
 
     /**
@@ -561,42 +561,42 @@ class Gitphull {
      */
     protected function deleteOldBranches($checkedOut, $remotes, $notManaged) {
 
-    	if(!count($checkedOut) || !count($remotes)) {
-    		return;
-    	}
-    	foreach($notManaged as &$m) {
-    		$m = str_replace($this->invalidBranchCharacters, '', $m);
-    	}
-    	foreach($remotes as &$r) {
-    		$r = str_replace($this->invalidBranchCharacters, '', $r);
-    	}
+        if(!count($checkedOut) || !count($remotes)) {
+            return;
+        }
+        foreach($notManaged as &$m) {
+            $m = str_replace($this->invalidBranchCharacters, '', $m);
+        }
+        foreach($remotes as &$r) {
+            $r = str_replace($this->invalidBranchCharacters, '', $r);
+        }
 
-    	foreach($checkedOut as $co) {
-    		if(in_array($co, $notManaged)) {
-    			continue;
-    		}
-    		if(in_array($co, $remotes)) {
-    			continue;
-    		}
+        foreach($checkedOut as $co) {
+            if(in_array($co, $notManaged)) {
+                continue;
+            }
+            if(in_array($co, $remotes)) {
+                continue;
+            }
 
-    		$branchPath = str_replace($this->invalidBranchCharacters, '', $co);
+            $branchPath = str_replace($this->invalidBranchCharacters, '', $co);
 
-    		$this->current = array();
-    		$this->current['branch'] = $co;
-    		$this->current['branchPath'] = $branchPath;
-    		$dir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
-    		$this->current['gitPath'] = $dir;
+            $this->current = array();
+            $this->current['branch'] = $co;
+            $this->current['branchPath'] = $branchPath;
+            $dir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+            $this->current['gitPath'] = $dir;
 
-    		$this->msg("check $dir/managedbranch.txt");
-    		if(file_exists($dir . "/managedbranch.txt")) {
-    			$this->msg("Delete $co");
-    			$cmd = "rm -Rf $dir";
-    			$this->runCommand($cmd);
-    			$this->afterBranchDelete($co);
-    		} else {
-    			$this->msg("Keep $co");
-    		}
-    	}
+            $this->msg("check $dir/managedbranch.txt");
+            if(file_exists($dir . "/managedbranch.txt")) {
+                $this->msg("Delete $co");
+                $cmd = "rm -Rf $dir";
+                $this->runCommand($cmd);
+                $this->afterBranchDelete($co);
+            } else {
+                $this->msg("Keep $co");
+            }
+        }
     }
 
     /**
@@ -604,51 +604,51 @@ class Gitphull {
      * @param string $branch
      */
     protected function updateOrClone($branch) {
-    	$repo = $this->repo;
-    	$dir = $this->masterDir;
-    	$this->current['branch'] = $branch;
-    	$this->current['branchPath'] = str_replace($this->invalidBranchCharacters, '', $branch);
-    	$this->current['gitPath'] = $dir;
+        $repo = $this->repo;
+        $dir = $this->masterDir;
+        $this->current['branch'] = $branch;
+        $this->current['branchPath'] = str_replace($this->invalidBranchCharacters, '', $branch);
+        $this->current['gitPath'] = $dir;
 
-    	if($branch != $this->masterBranch) {
-    	    // path for branches other than master
-    		$dir = str_replace($this->masterBranch, $this->current['branchPath'], $this->masterDir);
-    		$this->current['gitPath'] = $dir;
+        if($branch != $this->masterBranch) {
+            // path for branches other than master
+            $dir = str_replace($this->masterBranch, $this->current['branchPath'], $this->masterDir);
+            $this->current['gitPath'] = $dir;
 
-    	} else {
-    	    // "master" branch (fetch names of other branches)
-    		$cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" remote prune origin";
-    		$this->msg($cmd);
-    		$this->runCommand($cmd);
-    		$cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" fetch";
-    		$this->msg($cmd);
-    		$this->runCommand($cmd);
-    		$this->msg("pruned and fetched " . $this->masterBranch);
-    	}
+        } else {
+            // "master" branch (fetch names of other branches)
+            $cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" remote prune origin";
+            $this->msg($cmd);
+            $this->runCommand($cmd);
+            $cmd = "git --git-dir=$this->masterDir/.git --work-tree=\"". $this->masterDir ."\" fetch";
+            $this->msg($cmd);
+            $this->runCommand($cmd);
+            $this->msg("pruned and fetched " . $this->masterBranch);
+        }
 
-		if(!file_exists($dir)) {
-	    	@$result = mkdir($dir);
-	    	if($result == '1') {
-	    		$this->msg('created ' . $dir);
-	    	} else {
-	    		$this->msg('could not create ' . $dir);
-	    		throw new Exception('could not create branch dir ' . $dir);
-	    	}
-		}
+        if(!file_exists($dir)) {
+            @$result = mkdir($dir);
+            if($result == '1') {
+                $this->msg('created ' . $dir);
+            } else {
+                $this->msg('could not create ' . $dir);
+                throw new Exception('could not create branch dir ' . $dir);
+            }
+        }
 
-    	// Either clone or update a branch
-    	if(!file_exists($dir.'/.git')) {
-    		$this->msg("CLONE $branch");
-    		$this->klone($branch);
-    		$this->applyPermissions();
-    		$this->afterBranchClone($branch);
-    	} else {
-    		$this->msg("update $branch");
-    		$this->beforeBranchUpdate($branch);
-    		$this->update($branch);
-    		$this->applyPermissions();
-    		$this->afterBranchUpdate($branch);
-    	}
+        // Either clone or update a branch
+        if(!file_exists($dir.'/.git')) {
+            $this->msg("CLONE $branch");
+            $this->klone($branch);
+            $this->applyPermissions();
+            $this->afterBranchClone($branch);
+        } else {
+            $this->msg("update $branch");
+            $this->beforeBranchUpdate($branch);
+            $this->update($branch);
+            $this->applyPermissions();
+            $this->afterBranchUpdate($branch);
+        }
 
     }
 
@@ -658,28 +658,28 @@ class Gitphull {
      */
     protected function applyPermissions() {
 
-    	$dir = $this->current['gitPath'];
+        $dir = $this->current['gitPath'];
 
-    	if(empty($this->ownerInfo)) {
-    		return false;
-    	}
+        if(empty($this->ownerInfo)) {
+            return false;
+        }
 
-    	if(!empty($this->ownerInfo['user'])) {
-    		$cmd = 'chown -R ' . $this->ownerInfo['user'] . " $dir";
-    		shell_exec($cmd);
-    	}
+        if(!empty($this->ownerInfo['user'])) {
+            $cmd = 'chown -R ' . $this->ownerInfo['user'] . " $dir";
+            shell_exec($cmd);
+        }
 
-    	if(!empty($this->ownerInfo['group'])) {
-    		$cmd = 'chgrp -R ' . $this->ownerInfo['group'] . " $dir";
-    		shell_exec($cmd);
-    	}
+        if(!empty($this->ownerInfo['group'])) {
+            $cmd = 'chgrp -R ' . $this->ownerInfo['group'] . " $dir";
+            shell_exec($cmd);
+        }
 
-    	if(!empty($this->ownerInfo['mask'])) {
-    		$cmd = 'chmod -R ' . $this->ownerInfo['mask'] . " $dir";
-    		shell_exec($cmd);
-    	}
+        if(!empty($this->ownerInfo['mask'])) {
+            $cmd = 'chmod -R ' . $this->ownerInfo['mask'] . " $dir";
+            shell_exec($cmd);
+        }
 
-    	return true;
+        return true;
 
     }
 
@@ -688,117 +688,117 @@ class Gitphull {
      * @return Ambigous <NULL, string>
      */
     protected function getRepoPath() {
-    	$repoPath = null;
-    	$repoFound = preg_match('/https:\/\/github.com(.*)\.git/', $this->repo,$match);
-    	if($repoFound) {
-    		$repoPath = $match[1];
-    	}
-    	if(!$repoPath) {
-    		$repoFound = preg_match('/git@github.com:(.*)\.git/', $this->repo,$match);
-    		if($repoFound) {
-    			$repoPath = '/' . $match[1];
-    		}
-    	}
-    	return $repoPath;
+        $repoPath = null;
+        $repoFound = preg_match('/https:\/\/github.com(.*)\.git/', $this->repo,$match);
+        if($repoFound) {
+            $repoPath = $match[1];
+        }
+        if(!$repoPath) {
+            $repoFound = preg_match('/git@github.com:(.*)\.git/', $this->repo,$match);
+            if($repoFound) {
+                $repoPath = '/' . $match[1];
+            }
+        }
+        return $repoPath;
     }
 
     /**
      * Generate a diff of branches (compared to master)
      */
     protected function generateBranchDiffs() {
-		if(empty($this->branchDiffsFileLocation)) {
-			return;
-		}
+        if(empty($this->branchDiffsFileLocation)) {
+            return;
+        }
 
-		// so we can link to github
-		$repoPath = $this->getRepoPath();
+        // so we can link to github
+        $repoPath = $this->getRepoPath();
 
-		$html = '<html><head><title>Branches</title></head><body>';
+        $html = '<html><head><title>Branches</title></head><body>';
 
-		// write out an index of branches
-		$html .= '<table width=200 cellspacing=0 cellpadding=2><tr><td>Branch</td><td>Changes</td></tr>';
-		foreach($this->currentBranches as $b) {
-			$result = null;
-			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
-			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+        // write out an index of branches
+        $html .= '<table width=200 cellspacing=0 cellpadding=2><tr><td>Branch</td><td>Changes</td></tr>';
+        foreach($this->currentBranches as $b) {
+            $result = null;
+            $branchPath = str_replace($this->invalidBranchCharacters,'',$b);
+            $historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
 
-			if($b == $this->masterBranch || $branchPath == '') {
-				continue;
-			}
-			$html .= '<tr><td><a href="http://'. $branchPath .'.' . $this->domain . '/">' . $b . "</a></td><td><a href=\"#$branchPath\">Changes</a><BR></td></tr>\n";
-		}
-		$html .= '</table><hr>';
+            if($b == $this->masterBranch || $branchPath == '') {
+                continue;
+            }
+            $html .= '<tr><td><a href="http://'. $branchPath .'.' . $this->domain . '/">' . $b . "</a></td><td><a href=\"#$branchPath\">Changes</a><BR></td></tr>\n";
+        }
+        $html .= '</table><hr>';
 
 
-		/* try to grab some log info */
-		foreach($this->currentBranches as $b) {
+        /* try to grab some log info */
+        foreach($this->currentBranches as $b) {
 
-			$result = null;
-			$branchPath = str_replace($this->invalidBranchCharacters,'',$b);
-			$historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
+            $result = null;
+            $branchPath = str_replace($this->invalidBranchCharacters,'',$b);
+            $historyDir = str_replace($this->masterBranch, $branchPath, $this->masterDir);
 
-			if($b == $this->masterBranch) {
-				continue;
-			}
+            if($b == $this->masterBranch) {
+                continue;
+            }
 
-			if($repoPath) {
-				$html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
-			} else {
-				$html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
-			}
+            if($repoPath) {
+                $html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
+            } else {
+                $html .= '<h3><a target="ghb" id="'. $branchPath .'" href="https://github.com' . $repoPath . '/tree/'. $b .'">' . $b . "</a></h3>\n";
+            }
 
-			// diff this branch with master and output the resutls to html
-			$cmd = "git --git-dir=$historyDir/.git --work-tree=\"$historyDir\" log $b ^{$this->masterBranch} --no-merges";
-			// git --git-dir=/var/www/connect_api/.git --work-tree="/var/www/connect_api" log api ^master --no-merges
-			//$html .= $cmd . '<BR>';
-			exec($cmd, $result);
+            // diff this branch with master and output the resutls to html
+            $cmd = "git --git-dir=$historyDir/.git --work-tree=\"$historyDir\" log $b ^{$this->masterBranch} --no-merges";
+            // git --git-dir=/var/www/connect_api/.git --work-tree="/var/www/connect_api" log api ^master --no-merges
+            //$html .= $cmd . '<BR>';
+            exec($cmd, $result);
 
-			if(count($result)> 0) {
-				foreach($result as $line) {
+            if(count($result)> 0) {
+                foreach($result as $line) {
 
-					$piv = 0;
-					$status = '';
-					if(!empty($this->piv['token'])) {
+                    $piv = 0;
+                    $status = '';
+                    if(!empty($this->piv['token'])) {
 
-						// find a piv number - ok any number and hope it is right
-						//preg_match('/([0-9]{6,10})\]/', $line, $matches);
-						preg_match('/#([0-9]{6,10})/', $line, $matches);
-						if(!empty($matches[1])) {
-							$piv = (int) $matches[1];
-						}
+                        // find a piv number - ok any number and hope it is right
+                        //preg_match('/([0-9]{6,10})\]/', $line, $matches);
+                        preg_match('/#([0-9]{6,10})/', $line, $matches);
+                        if(!empty($matches[1])) {
+                            $piv = (int) $matches[1];
+                        }
 
-						$status = '';
-						if($piv > 0 ) {
-							$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
-							$line = str_replace($piv, $link, $line);
-							$pivInfo = $this->getPivInfo($piv);
-							$status = trim(strtolower($pivInfo['current_state']));
-						}
-					}
+                        $status = '';
+                        if($piv > 0 ) {
+                            $link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
+                            $line = str_replace($piv, $link, $line);
+                            $pivInfo = $this->getPivInfo($piv);
+                            $status = trim(strtolower($pivInfo['current_state']));
+                        }
+                    }
 
-					// look for commit hash
-					preg_match('/commit [0-9a-f]{40}/', $line, $commits);
-					if(!empty($commits[0])) {
-						$commit = str_replace('commit ', '', $commits[0]);
-						$link = '<a href="https://github.com'. $repoPath .'/commit/'. $commit .'" target="gh">'. $commit . "</a>";
-						$line = str_replace($commit, $link, $line);
-					}
+                    // look for commit hash
+                    preg_match('/commit [0-9a-f]{40}/', $line, $commits);
+                    if(!empty($commits[0])) {
+                        $commit = str_replace('commit ', '', $commits[0]);
+                        $link = '<a href="https://github.com'. $repoPath .'/commit/'. $commit .'" target="gh">'. $commit . "</a>";
+                        $line = str_replace($commit, $link, $line);
+                    }
 
-					if($piv > 0 && !empty($status)) {
-						$line = $status . '<BR>' . $line;
-					}
+                    if($piv > 0 && !empty($status)) {
+                        $line = $status . '<BR>' . $line;
+                    }
 
-					$html .= $line . "<br>\n";
-				}
-			}
+                    $html .= $line . "<br>\n";
+                }
+            }
 
-			$html .= "<hr>";
-		}
+            $html .= "<hr>";
+        }
 
-		$html .= '</body></html>';
-		$indexFile = $this->masterDir . $this->branchDiffsFileLocation;
-		$this->msg('Write diff file to ' . $indexFile);
-		file_put_contents($indexFile, $html);
+        $html .= '</body></html>';
+        $indexFile = $this->masterDir . $this->branchDiffsFileLocation;
+        $this->msg('Write diff file to ' . $indexFile);
+        file_put_contents($indexFile, $html);
 
 
 
@@ -811,19 +811,19 @@ class Gitphull {
      */
     protected function getPivInfo($pivStoryId) {
 
-		$token = $this->piv['token'];
-		$url = $this->piv['url'] . $pivStoryId;
-		$ch = curl_init();
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    			"X-TrackerToken: $token"
-		));
-		$result = curl_exec($ch);
-		curl_close($ch);
-		$json = json_decode($result, true);
+        $token = $this->piv['token'];
+        $url = $this->piv['url'] . $pivStoryId;
+        $ch = curl_init();
+        curl_setopt( $ch, CURLOPT_URL, $url );
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                "X-TrackerToken: $token"
+        ));
+        $result = curl_exec($ch);
+        curl_close($ch);
+        $json = json_decode($result, true);
 
-		return $json;
+        return $json;
     }
 
     /**
@@ -834,151 +834,151 @@ class Gitphull {
      */
     protected function liveDiff() {
 
-	    // find current branch
-	    $branch = $this->masterBranch;
+        // find current branch
+        $branch = $this->masterBranch;
 
-	    $this->msg("Current branch: $branch");
-	    $rs = null;
+        $this->msg("Current branch: $branch");
+        $rs = null;
 
-	    // https://github.com/deseretdigital/deseret-connect/commit/18eeb230676c4faa81e009ff263376420362aea6
-		// https://www.pivotaltracker.com/story/show/30848279
+        // https://github.com/deseretdigital/deseret-connect/commit/18eeb230676c4faa81e009ff263376420362aea6
+        // https://www.pivotaltracker.com/story/show/30848279
 
-		// get live version (hash)
-		@$liveHash = trim(file_get_contents($this->urlCurrentHash));
-		$this->msg('live hash = ' . $liveHash);
-		if(!$liveHash) {
-			$this->liveLog = null;
-			return $this;
-		}
+        // get live version (hash)
+        @$liveHash = trim(file_get_contents($this->urlCurrentHash));
+        $this->msg('live hash = ' . $liveHash);
+        if(!$liveHash) {
+            $this->liveLog = null;
+            return $this;
+        }
 
-		if(!$this->masterDir) {
-			$this->masterDir = $this->location . $this->prefix . $this->masterBranch;
-		}
+        if(!$this->masterDir) {
+            $this->masterDir = $this->location . $this->prefix . $this->masterBranch;
+        }
 
-		// commits are stored in here
-		$log = array();
-		$limit = 30;
+        // commits are stored in here
+        $log = array();
+        $limit = 30;
 
-		$cmd = "git --git-dir={$this->masterDir}/.git --work-tree={$this->masterDir}/ log -$limit";
-		exec($cmd, $rs);
+        $cmd = "git --git-dir={$this->masterDir}/.git --work-tree={$this->masterDir}/ log -$limit";
+        exec($cmd, $rs);
 
-		$foundLive = false;
-		$style = '';
-		$status = '';
-		if(count($rs)) {
-			$item = array();
-			foreach($rs as $line) {
-				// is this the start of a new commit?
-				if(strpos($line, 'commit') !== false) {
+        $foundLive = false;
+        $style = '';
+        $status = '';
+        if(count($rs)) {
+            $item = array();
+            foreach($rs as $line) {
+                // is this the start of a new commit?
+                if(strpos($line, 'commit') !== false) {
 
-					//ignore merges
-	    			if(!empty($item['merge']) && $item['github'] != $liveHash) {
-		   				$item = array();
-	    			}
-
-	    			// output current entry and reset
-	    			if(count($item)){
-	    				$log[] = $item;
-	    				$item = array();
-	    			}
-
-					$cmt = str_replace('commit ', '', $line);
-	    			$insert = '';
-	    			if($cmt == $liveHash) {
-	    				$insert = '<div style="background-color: #900; color:#FFF; padding:2px;">Live</div>';
-	    				$item['live'] = true;
-	    				$foundLive = true;
-	    				$style = '';
-	    				$state = '';
-	    			}
-	    			$line = substr($line, 0, 15); // we don't need the whole hash
-
-	    			//$item['insert'] = $insert;
-	    			$item['github'] = $cmt;
-
-	    		} else {
-					// this is just a new line on an existing entry(commit)
-					// find a piv number - ok any number, we aren't picky - and hope it is right
-                    $piv = 0;
-                    if(!empty($this->piv)) {
-						//preg_match('/([0-9]{6,10})\]/', $line, $matches);
-		    			preg_match('/#([0-9]{6,10})/', $line, $matches);
-		    			if(!empty($matches[1])) {
-		    				$piv = (int) $matches[1];
-		    			}
+                    //ignore merges
+                    if(!empty($item['merge']) && $item['github'] != $liveHash) {
+                           $item = array();
                     }
 
-	    			if($piv > 0 ) {
-	    				$bg = '#FFF';
-	    				$item['pivId'] = $piv;
-	    				if(!$foundLive || 1) {
-	    					$pivInfo = $this->getPivInfo($piv);
-	    					$item['piv'] = $pivInfo;
-	    					$status = trim(strtolower($pivInfo['current_state']));
-	    					if($status != '') {
-	    						$item['status'] = $status;
-	    					}
-	    				}
-	    				//$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
-	    				$link = '';
-	    				//$line = str_replace('[#' . $piv . ']', '<span style="float:right">[#'. $link . ']</span>', $line);
-	    				$style = "background-color: $bg ;";
-	    			}
-					if(strpos($line, 'Author') !== false) {
-    					$item['author'] = $line;
-    				} else if(strpos($line, 'Merge') !== false) {
-    					$item['merge'] = $line;
-    				} else if(strpos($line, 'Date') === 0) {
-    					@$item['date'] .= $line;
-    				} else {
-    					if(empty($item['body'])) {
-    						$item['body'] = $line;
-    					} else {
-    						$item['body'] .= $line;
-    					}
-    				}
-    			}
+                    // output current entry and reset
+                    if(count($item)){
+                        $log[] = $item;
+                        $item = array();
+                    }
 
-    		} // foreach
+                    $cmt = str_replace('commit ', '', $line);
+                    $insert = '';
+                    if($cmt == $liveHash) {
+                        $insert = '<div style="background-color: #900; color:#FFF; padding:2px;">Live</div>';
+                        $item['live'] = true;
+                        $foundLive = true;
+                        $style = '';
+                        $state = '';
+                    }
+                    $line = substr($line, 0, 15); // we don't need the whole hash
 
-    		// output last entry
-    		$style = '';
-    		if(count($item)){
-    			$log[] = $item;
-    			$item = array();
-    		}
+                    //$item['insert'] = $insert;
+                    $item['github'] = $cmt;
 
-		$this->liveLog = $log;
+                } else {
+                    // this is just a new line on an existing entry(commit)
+                    // find a piv number - ok any number, we aren't picky - and hope it is right
+                    $piv = 0;
+                    if(!empty($this->piv)) {
+                        //preg_match('/([0-9]{6,10})\]/', $line, $matches);
+                        preg_match('/#([0-9]{6,10})/', $line, $matches);
+                        if(!empty($matches[1])) {
+                            $piv = (int) $matches[1];
+                        }
+                    }
 
-		return $this;
+                    if($piv > 0 ) {
+                        $bg = '#FFF';
+                        $item['pivId'] = $piv;
+                        if(!$foundLive || 1) {
+                            $pivInfo = $this->getPivInfo($piv);
+                            $item['piv'] = $pivInfo;
+                            $status = trim(strtolower($pivInfo['current_state']));
+                            if($status != '') {
+                                $item['status'] = $status;
+                            }
+                        }
+                        //$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
+                        $link = '';
+                        //$line = str_replace('[#' . $piv . ']', '<span style="float:right">[#'. $link . ']</span>', $line);
+                        $style = "background-color: $bg ;";
+                    }
+                    if(strpos($line, 'Author') !== false) {
+                        $item['author'] = $line;
+                    } else if(strpos($line, 'Merge') !== false) {
+                        $item['merge'] = $line;
+                    } else if(strpos($line, 'Date') === 0) {
+                        @$item['date'] .= $line;
+                    } else {
+                        if(empty($item['body'])) {
+                            $item['body'] = $line;
+                        } else {
+                            $item['body'] .= $line;
+                        }
+                    }
+                }
 
-		}
+            } // foreach
+
+            // output last entry
+            $style = '';
+            if(count($item)){
+                $log[] = $item;
+                $item = array();
+            }
+
+        $this->liveLog = $log;
+
+        return $this;
+
+        }
 
 
-	} // end live()
+    } // end live()
 
 
-	public function writeLiveDiff() {
+    public function writeLiveDiff() {
 
-		if(empty($this->liveLog)) {
-			$this->liveDiff();
-		}
-		if(empty($this->liveLog)) {
-			return 'Unable to render report';
-		}
+        if(empty($this->liveLog)) {
+            $this->liveDiff();
+        }
+        if(empty($this->liveLog)) {
+            return 'Unable to render report';
+        }
 
-		$this->repoPath = $this->getRepoPath();
+        $this->repoPath = $this->getRepoPath();
 
-		ob_start();
-		include_once 'liveLog.php';
-		$contents = ob_get_contents();
-		ob_end_clean();
+        ob_start();
+        include_once 'liveLog.php';
+        $contents = ob_get_contents();
+        ob_end_clean();
 
-		$location = $this->masterDir . $this->liveDiffFileLocation;
-		$this->msg('Write live log to ' . $location . '. Content length = ' . strlen($contents));
-		file_put_contents($location, $contents);
+        $location = $this->masterDir . $this->liveDiffFileLocation;
+        $this->msg('Write live log to ' . $location . '. Content length = ' . strlen($contents));
+        file_put_contents($location, $contents);
 
-		exit;
-	}
+        exit;
+    }
 
 }
