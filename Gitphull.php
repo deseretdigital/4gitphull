@@ -196,15 +196,15 @@ class Gitphull {
     		$this->deleteOldBranches($this->currentBranches, $remotes, $this->ignoreBranches);
 
             // Figure out which branches to update
-            exec('git ls-remote --heads', $remoteOut);
-            exec('git show-ref', $localOut);
+            $masterRepo = $this->current['gitPath'];
+            exec("git --git-dir=\"$masterRepo/.git\" --work-tree=\"$masterRepo\" ls-remote --heads", $remoteOut);
             foreach($remoteOut as $line) {
                 preg_match('|^([0-9a-f]+)\s+refs/heads/(?!HEAD)(.+)|', $line, $match);
                 if(!empty($match)) {
                     $this->remoteRefs[$match[2]] = $match[1];
                 }
             }
-            /*$localRefs = array();
+            /*exec('git show-ref', $localOut);
             foreach($localOut as $line) {
                 preg_match('|^([0-9a-f]+)\s+refs/remotes/origin/(?!HEAD)(.+)|', $line, $match);
                 if(!empty($match)) {
