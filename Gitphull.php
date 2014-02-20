@@ -521,12 +521,26 @@ class Gitphull {
      */
     protected function klone($branch) {
         $dir = $this->current['gitPath'];
+        // clone the target branch to into $dir
         $cmd = "git clone --branch=$branch {$this->repo} {$dir}";
         $this->msg($cmd);
         $this->runCommand($cmd);
         $cmd = "touch {$this->location}{$this->prefix}{$branch}/managedbranch.txt";
         $this->msg($cmd);
         $this->runCommand($cmd);
+
+        if($branch != $this->masterBranch) {
+            // checkout master (or diffs against master may not always work)
+            $cmd = "git --git-dir=$dir/.git --work-tree=\"$dir\" checkout " . $this->masterBranch;
+            $this->msg("Update ". $this->masterBranch . " on $dir");
+            $this->runCommand($cmd);
+            $cmd = "cd $dir ; git pull";
+            $this->msg($cmd);
+
+            //switch back to $branch
+            $cmd = "git --git-dir=$dir/.git --work-tree=\"$dir\" checkout $branch";
+            $this->runCommand($cmd);
+        }
     }
 
     /**
@@ -844,7 +858,18 @@ class Gitphull {
         // https://www.pivotaltracker.com/story/show/30848279
 
         // get live version (hash)
-        @$liveHash = trim(file_get_contents($this->urlCurrentHash));
+        $liveHash = '';
+        if($this->urlCurrentHash) {
+            $ch = curl_init();
+            if($ch === false) {
+                $this->msg("Can't curl to get live hash");
+                return $this;
+            }
+            curl_setopt($ch, CURLOPT_URL, $this->urlCurrentHash);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $liveHash = curl_exec($ch);
+            curl_close($ch);
+        }
         $this->msg('live hash = ' . $liveHash);
         if(!$liveHash) {
             $this->liveLog = null;
