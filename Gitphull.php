@@ -129,6 +129,13 @@ class Gitphull {
     protected $liveDiffFileLocation = null;
 
     /**
+     * Limit how man commits show in the live diff
+     * @var int
+     */
+    protected $limitLiveDiff = 30;
+
+
+    /**
      * Array of connection info for pivotal tracker
      * @var array
      */
@@ -266,6 +273,20 @@ class Gitphull {
         $this->liveDiffFileLocation = $location;
         return $this;
     }
+
+    /**
+     * Limit many commits to show in the live diff
+     * @param int $limit
+     * @return Gitphull
+     */
+    public function setLiveDiffLimit($limit) {
+        $limit = (int) $limit;
+	if($limit > 0 && $limit < 500) {
+		$this->limitLiveDiff = $limit;
+	}
+        return $this;
+    }
+
 
     /**
      * Url to a page which returns the hash of the release that is currently in production
@@ -882,9 +903,8 @@ class Gitphull {
 
         // commits are stored in here
         $log = array();
-        $limit = 30;
 
-        $cmd = "git --git-dir={$this->masterDir}/.git --work-tree={$this->masterDir}/ log -$limit";
+        $cmd = "git --git-dir={$this->masterDir}/.git --work-tree={$this->masterDir}/ log -". $this->limitLiveDiff;
         exec($cmd, $rs);
 
         $foundLive = false;
@@ -1000,6 +1020,7 @@ class Gitphull {
         ob_end_clean();
 
         $location = $this->masterDir . $this->liveDiffFileLocation;
+
         $this->msg('Write live log to ' . $location . '. Content length = ' . strlen($contents));
         file_put_contents($location, $contents);
 
