@@ -1,4 +1,11 @@
+<html>
+<head>
+</head>
+<body>
 <style>
+.pull-right {
+	float-right;
+}
 .commit {
 	border-top: 1px solid black;
 	margin:5px;
@@ -144,3 +151,6 @@ foreach($data as $d) {
     echo "</div>";
 
 }
+?>
+</body>
+</html>
