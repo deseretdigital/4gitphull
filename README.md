@@ -83,6 +83,7 @@ Provide a url to a page that gives the hash of the current release. Provide a pa
 
     ->setUrlCurrentHash('http://example.com/hash_of_current_release.php')
     ->setLiveDiffFileLocation('/live.html') // relative to local master
+    ->setLiveDiffLimit(50) // defaults to 30 commits
  
 Methods that run after events
 --------
