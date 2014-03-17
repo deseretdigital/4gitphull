@@ -907,7 +907,12 @@ class Gitphull {
      * @param string $pivStoryId
      * @return mixed
      */
-    protected function getPivInfo($pivStoryId) {
+    protected function getPivInfo($pivStoryId, $useCache = true) {
+        static $cache = array();
+
+        if($useCache && isset($cache[$pivStoryId])) {
+            return $cache[$pivStoryId];
+        }
 
         $token = $this->piv['token'];
         $url = $this->piv['url'] . $pivStoryId;
@@ -920,6 +925,8 @@ class Gitphull {
         $result = curl_exec($ch);
         curl_close($ch);
         $json = json_decode($result, true);
+
+        $cache[$pivStoryId] = $json;
 
         return $json;
     }
