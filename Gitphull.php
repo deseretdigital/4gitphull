@@ -1054,7 +1054,16 @@ class Gitphull {
                         $item['pivId'] = $piv;
 
                         $pivInfo = $this->getPivInfo($piv);
-                        if($foundLive && $this->autoLabelLaunched) {
+
+                        $launchedLabelFound = false;
+                        foreach($pivInfo['labels'] as $label) {
+                            if($label['name'] == $this->launchedLabelText) {
+                                $launchedLabelFound = true;
+                                break;
+                            }
+                        }
+
+                        if($foundLive && !$launchedLabelFound && $this->autoLabelLaunched) {
                             $this->addPivLabel($piv, $this->launchedLabelText);
                         }
 
