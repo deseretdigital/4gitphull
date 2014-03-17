@@ -166,6 +166,24 @@ class Gitphull {
     protected $liveLog = null;
 
     /**
+     * bool to determine if pivotal stories should be automatically labeled with branch name
+     * @var bool
+     */
+    protected $autoLabelBranches = false;
+
+    /**
+     * bool to determine if pivotal stories should be automatically labeled when launched
+     * @var bool
+     */
+    protected $autoLabelLaunched = false;
+
+    /**
+     * string text to be used as a pivotal label for launched stories (only applicable if $autoLabelLaunched is set to true)
+     * @var string
+     */
+    protected $launchedLabelText = "launched";
+
+    /**
      * Checkout or update all branches that aren't ignored.
      */
     public function run() {
@@ -281,9 +299,9 @@ class Gitphull {
      */
     public function setLiveDiffLimit($limit) {
         $limit = (int) $limit;
-	if($limit > 0 && $limit < 500) {
-		$this->limitLiveDiff = $limit;
-	}
+    if($limit > 0 && $limit < 500) {
+        $this->limitLiveDiff = $limit;
+    }
         return $this;
     }
 
@@ -304,9 +322,10 @@ class Gitphull {
      * @param string $apiUrl
      * @return Gitphull
      */
-    public function setPivotalTracker($token, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/') {
+    public function setPivotalTracker($token, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/', $projectId) {
         $this->piv['token'] = $token;
         $this->piv['url'] = $apiUrl;
+        $this->piv['projectId'] = $projectId;
         return $this;
     }
 
@@ -396,6 +415,36 @@ class Gitphull {
     }
 
     /**
+     * Set the autoLabelBranches bool
+     * @param bool $toggle
+     */
+    public function setAutoLabelBranches($toggle)
+    {
+        $this->autoLabelBranches = $toggle;
+        return $this;
+    }
+
+    /**
+     * Set the autoLabelLaunched bool
+     * @param bool $toggle
+     */
+    public function setAutoLabelLaunched($toggle)
+    {
+        $this->autoLabelLaunched = $toggle;
+        return $this;
+    }
+
+    /**
+     * Set the label text for launched pivitol stories (only applicable if $autoLabelLaunched is true)
+     * @param $string label
+     */
+    public function setLaunchedLabelText($label)
+    {
+        $this->launchedLabelText = $label;
+        return $this;
+    }
+
+    /**
      * Do stuff - after run is finished (all branches are updated)
      * @param string $branch
      */
@@ -472,7 +521,7 @@ class Gitphull {
                 continue; // skip branches not managed by this script
             }
             if(!empty($this->onlyBranches) && !in_array($branch, $this->onlyBranches) ) {
-                continue; // if we want only some branches, ignroe all others
+                continue; // if we want only some branches, ignore all others
             }
             $currentBranches[] = $branch;
         }
@@ -807,6 +856,10 @@ class Gitphull {
                             $link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
                             $line = str_replace($piv, $link, $line);
                             $pivInfo = $this->getPivInfo($piv);
+                            if($this->autoLabelBranches){
+                                $this->addPivLabel($piv, $b.' branch');
+                            }
+
                             $status = trim(strtolower($pivInfo['current_state']));
                         }
                     }
@@ -855,6 +908,39 @@ class Gitphull {
                 "X-TrackerToken: $token"
         ));
         $result = curl_exec($ch);
+        curl_close($ch);
+        $json = json_decode($result, true);
+
+        return $json;
+    }
+
+    /**
+     * Hit pivotal tracker to add the specified label to a story if it does not already exist
+     * @param int $pivStoryId
+     * @param string $labelName
+     * @return mixed
+     *
+     */
+    protected function addPivLabel($pivStoryId, $labelName){
+        echo('Updating Pivotal label for story(' . $pivStoryId . ': ' . $labelName . ')' . "\n");
+
+        $token = $this->piv['token'];
+        $projectId = $this->piv['projectId'];
+
+        $url = 'https://www.pivotaltracker.com/services/v5/projects/' . $projectId . '/stories/';
+        $url .= $pivStoryId . '/labels';
+
+        $data = array('name' => strtolower($labelName));
+
+        $ch = curl_init();
+        curl_setopt( $ch, CURLOPT_URL, $url );
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                "X-TrackerToken: $token"
+         ));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        $result = curl_exec($ch);
+
         curl_close($ch);
         $json = json_decode($result, true);
 
@@ -958,6 +1044,10 @@ class Gitphull {
                         $item['pivId'] = $piv;
                         if(!$foundLive || 1) {
                             $pivInfo = $this->getPivInfo($piv);
+                            if($foundLive && $this->autoLabelLaunched) {
+                                $this->addPivLabel($piv, $this->launchedLabelText);
+                            }
+
                             $item['piv'] = $pivInfo;
                             $status = trim(strtolower($pivInfo['current_state']));
                             if($status != '') {
