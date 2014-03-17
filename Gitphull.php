@@ -299,9 +299,9 @@ class Gitphull {
      */
     public function setLiveDiffLimit($limit) {
         $limit = (int) $limit;
-    if($limit > 0 && $limit < 500) {
-        $this->limitLiveDiff = $limit;
-    }
+        if($limit > 0 && $limit < 500) {
+            $this->limitLiveDiff = $limit;
+        }
         return $this;
     }
 
@@ -936,8 +936,8 @@ class Gitphull {
         curl_setopt( $ch, CURLOPT_URL, $url );
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                "X-TrackerToken: $token"
-         ));
+            "X-TrackerToken: $token"
+        ));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         $result = curl_exec($ch);
 
