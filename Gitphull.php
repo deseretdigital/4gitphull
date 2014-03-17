@@ -322,7 +322,7 @@ class Gitphull {
      * @param string $apiUrl
      * @return Gitphull
      */
-    public function setPivotalTracker($token, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/', $projectId) {
+    public function setPivotalTracker($token, $projectId, $apiUrl = 'https://www.pivotaltracker.com/services/v5/stories/') {
         $this->piv['token'] = $token;
         $this->piv['url'] = $apiUrl;
         $this->piv['projectId'] = $projectId;
@@ -856,8 +856,18 @@ class Gitphull {
                             $link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
                             $line = str_replace($piv, $link, $line);
                             $pivInfo = $this->getPivInfo($piv);
-                            if($this->autoLabelBranches){
-                                $this->addPivLabel($piv, $b.' branch');
+
+                            $branchLabel = $b . ' branch';
+                            $branchLabelFound = false;
+                            foreach($pivInfo['labels'] as $label) {
+                                if($label['name'] == $branchLabel) {
+                                    $branchLabelFound = true;
+                                    break;
+                                }
+                            }
+
+                            if($this->autoLabelBranches && !$branchLabelFound) {
+                                $this->addPivLabel($piv, $branchLabel);
                             }
 
                             $status = trim(strtolower($pivInfo['current_state']));
@@ -1042,23 +1052,24 @@ class Gitphull {
                     if($piv > 0 ) {
                         $bg = '#FFF';
                         $item['pivId'] = $piv;
-                        if(!$foundLive || 1) {
-                            $pivInfo = $this->getPivInfo($piv);
-                            if($foundLive && $this->autoLabelLaunched) {
-                                $this->addPivLabel($piv, $this->launchedLabelText);
-                            }
 
-                            $item['piv'] = $pivInfo;
-                            $status = trim(strtolower($pivInfo['current_state']));
-                            if($status != '') {
-                                $item['status'] = $status;
-                            }
+                        $pivInfo = $this->getPivInfo($piv);
+                        if($foundLive && $this->autoLabelLaunched) {
+                            $this->addPivLabel($piv, $this->launchedLabelText);
                         }
+
+                        $item['piv'] = $pivInfo;
+                        $status = trim(strtolower($pivInfo['current_state']));
+                        if($status != '') {
+                            $item['status'] = $status;
+                        }
+
                         //$link = '<a href="https://www.pivotaltracker.com/story/show/'. $piv .'" target="piv">'. $piv . "</a>";
                         $link = '';
                         //$line = str_replace('[#' . $piv . ']', '<span style="float:right">[#'. $link . ']</span>', $line);
                         $style = "background-color: $bg ;";
                     }
+
                     if(strpos($line, 'Author') !== false) {
                         $item['author'] = $line;
                     } else if(strpos($line, 'Merge') !== false) {
