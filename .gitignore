@@ -4,4 +4,5 @@ repo
 .settings
 .project
 .buildpath
+nbproject
 *~
