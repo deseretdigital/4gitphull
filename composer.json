@@ -1,9 +1,16 @@
 {
+    "name": "deseretdigital/4gitphull",
+    "description": "A quick PHP class to pull all branches of project",
     "require-dev": {
         "phpunit/phpunit": "3.7.*",
         "phpunit/php-invoker": "~1.1.0"
     },
     "config": {
         "bin-dir": "bin"
+    },
+    "autoload": {
+        "classmap": [
+            "Gitphull.php"
+        ]
     }
 }
