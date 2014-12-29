@@ -7,6 +7,7 @@ class GitphullTest extends PHPUnit_Framework_TestCase
     protected static $repoDir = '/tmp/gitphullTest_repo';
     protected static $repoUri = 'file:///tmp/gitphullTest_repo';
     protected static $branches = array(
+        'master',
         'branch1',
         'branch2',
         'ignore_me',
